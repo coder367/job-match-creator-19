@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 
 export const HeroSection = () => {
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
+    <section className="hero-section relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
       {/* Animated dots background */}
       <div className="absolute inset-0 dots-pattern opacity-20" />
       

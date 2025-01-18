@@ -75,12 +75,22 @@ export default {
           "0%, 100%": { transform: "translateY(0)" },
           "50%": { transform: "translateY(-20px)" },
         },
+        "dark-dots": {
+          "0%": { backgroundPosition: "0 0" },
+          "100%": { backgroundPosition: "50px 50px" },
+        },
+        "dark-lines": {
+          "0%": { backgroundPosition: "0 0" },
+          "100%": { backgroundPosition: "40px 40px" },
+        }
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "infinite-scroll": "infinite-scroll 25s linear infinite",
         float: "float 6s ease-in-out infinite",
+        "dark-dots": "dark-dots 3s linear infinite",
+        "dark-lines": "dark-lines 3s linear infinite",
       },
     },
   },
