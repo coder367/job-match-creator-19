@@ -57,12 +57,6 @@ export const HeroSection = () => {
             <Button className="px-8 py-3 rounded-lg bg-primary text-primary-foreground font-semibold hover:opacity-90 transition-opacity">
               Get Started Free
             </Button>
-            <Button
-              variant="outline"
-              className="px-8 py-3 rounded-lg border border-primary text-primary hover:bg-primary/10 transition-colors"
-            >
-              Learn More
-            </Button>
           </motion.div>
 
           {/* Animated illustration */}
@@ -75,7 +69,7 @@ export const HeroSection = () => {
             <img
               src="/lovable-uploads/2152a833-428e-4c00-bfe8-0908669fd018.png"
               alt="Student looking at resume"
-              className="w-64 h-64 mx-auto animate-float"
+              className="w-96 h-96 mx-auto animate-float" // Increased size from w-64 h-64 to w-96 h-96
             />
           </motion.div>
         </div>
