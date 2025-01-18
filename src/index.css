@@ -58,26 +58,25 @@
   }
 }
 
-.dark .hero-gradient {
-  background: radial-gradient(circle at 50% 50%, 
-    rgba(124, 58, 237, 0.1) 0%,
-    rgba(45, 212, 191, 0.1) 25%,
+.dark .hero-pattern {
+  background: 
+    linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, transparent 100%),
+    radial-gradient(circle at 50% 0%, rgba(99, 102, 241, 0.1) 0%, transparent 50%);
+}
+
+.dark .hero-glow {
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(99, 102, 241, 0.15) 0%,
     transparent 50%
   );
+  filter: blur(40px);
 }
 
-.dark .hero-stars {
-  background-image: radial-gradient(circle at 1px 1px, rgb(255 255 255 / 0.3) 1px, transparent 0);
-  background-size: 30px 30px;
-  mask-image: linear-gradient(to bottom, transparent, black 25%, black 75%, transparent);
-}
-
-.dark .hero-constellation {
-  background: linear-gradient(45deg, 
-    transparent 45%,
-    rgba(255, 255, 255, 0.1) 45%,
-    rgba(255, 255, 255, 0.1) 55%,
-    transparent 55%
-  );
-  background-size: 60px 60px;
+.dark .hero-grid {
+  background-size: 50px 50px;
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  mask-image: radial-gradient(circle at 50% 50%, black 0%, transparent 70%);
 }

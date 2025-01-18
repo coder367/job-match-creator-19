@@ -4,32 +4,31 @@ import { Button } from "@/components/ui/button";
 export const HeroSection = () => {
   return (
     <section className="hero-section relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
-      {/* Animated background elements */}
-      <div className="absolute inset-0 hero-gradient" />
-      <div className="absolute inset-0 hero-stars opacity-70" />
-      <div className="absolute inset-0 hero-constellation opacity-30" />
+      {/* Background patterns */}
+      <div className="absolute inset-0 hero-pattern" />
+      <div className="absolute inset-0 hero-grid opacity-40" />
+      <div className="absolute inset-0 hero-glow" />
       
-      {/* Floating elements */}
-      <div className="absolute inset-0 overflow-hidden">
-        {[...Array(5)].map((_, i) => (
+      {/* Floating orbs */}
+      <div className="absolute inset-0">
+        {[...Array(3)].map((_, i) => (
           <motion.div
             key={i}
-            className="absolute rounded-full bg-white/10 backdrop-blur-3xl"
+            className="absolute w-32 h-32 rounded-full"
+            style={{
+              background: `radial-gradient(circle at center, rgba(99, 102, 241, ${0.1 - i * 0.02}) 0%, transparent 70%)`,
+              left: `${20 + i * 25}%`,
+              top: `${30 + i * 10}%`,
+            }}
             animate={{
-              y: [0, -20, 0],
-              opacity: [0.3, 0.5, 0.3],
+              scale: [1, 1.1, 1],
+              opacity: [0.5, 0.7, 0.5],
             }}
             transition={{
-              duration: 4,
+              duration: 5,
               repeat: Infinity,
-              delay: i * 0.7,
+              delay: i * 1.5,
               ease: "easeInOut",
-            }}
-            style={{
-              width: `${20 + i * 10}px`,
-              height: `${20 + i * 10}px`,
-              left: `${15 + i * 20}%`,
-              top: `${20 + i * 15}%`,
             }}
           />
         ))}
