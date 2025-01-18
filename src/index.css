@@ -64,9 +64,8 @@
 }
 
 .dark .dots-pattern {
-  background-image: radial-gradient(circle at 1px 1px, rgb(255 255 255 / 0.25) 1px, transparent 0);
+  background-image: radial-gradient(circle at 1px 1px, rgb(255 255 255 / 0.35) 1px, transparent 0);
   background-size: 30px 30px;
-  @apply animate-dark-dots;
 }
 
 .dark .hero-section::before {
@@ -76,15 +75,12 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-image: 
-    linear-gradient(to right, rgb(255 255 255 / 0.15) 1px, transparent 1px),
-    linear-gradient(to bottom, rgb(255 255 255 / 0.15) 1px, transparent 1px);
+  background-image: linear-gradient(to bottom, rgb(255 255 255 / 0.15) 1px, transparent 1px);
   background-size: 60px 60px;
-  @apply animate-dark-lines;
   z-index: 0;
 }
 
-/* Add a pseudo-element for the vanishing lines effect */
+/* Add a pseudo-element for the fading horizontal lines */
 .dark .hero-section::after {
   content: '';
   position: absolute;
@@ -92,15 +88,13 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-image: 
-    linear-gradient(to right, rgb(255 255 255 / 0.1) 1px, transparent 1px),
-    linear-gradient(to bottom, rgb(255 255 255 / 0.1) 1px, transparent 1px);
+  background-image: linear-gradient(to bottom, rgb(255 255 255 / 0.1) 1px, transparent 1px);
   background-size: 30px 30px;
-  animation: vanishLines 8s linear infinite;
+  mask-image: linear-gradient(to right, 
+    transparent 0%,
+    black 20%,
+    black 80%,
+    transparent 100%
+  );
   z-index: 0;
-}
-
-@keyframes vanishLines {
-  0%, 100% { opacity: 0; }
-  50% { opacity: 1; }
 }
