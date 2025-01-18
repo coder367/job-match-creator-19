@@ -73,7 +73,7 @@ export const HeroSection = () => {
             className="mt-12"
           >
             <img
-              src="https://illustrations.popsy.co/white/student-man.svg"
+              src="/lovable-uploads/2152a833-428e-4c00-bfe8-0908669fd018.png"
               alt="Student looking at resume"
               className="w-64 h-64 mx-auto animate-float"
             />
