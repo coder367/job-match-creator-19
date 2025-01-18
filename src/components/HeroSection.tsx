@@ -58,20 +58,6 @@ export const HeroSection = () => {
               Get Started Free
             </Button>
           </motion.div>
-
-          {/* Animated illustration */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.8, duration: 0.8 }}
-            className="mt-12"
-          >
-            <img
-              src="/lovable-uploads/2152a833-428e-4c00-bfe8-0908669fd018.png"
-              alt="Student looking at resume"
-              className="w-96 h-96 mx-auto animate-float" // Increased size from w-64 h-64 to w-96 h-96
-            />
-          </motion.div>
         </div>
       </div>
       <div className="absolute -bottom-48 left-0 right-0 h-48 bg-gradient-to-t from-background to-transparent" />
