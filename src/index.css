@@ -58,28 +58,26 @@
   }
 }
 
-.dots-pattern {
-  background-image: radial-gradient(circle at 1px 1px, rgb(255 255 255 / 0.15) 1px, transparent 0);
-  background-size: 20px 20px;
+.dark .hero-gradient {
+  background: radial-gradient(circle at 50% 50%, 
+    rgba(124, 58, 237, 0.1) 0%,
+    rgba(45, 212, 191, 0.1) 25%,
+    transparent 50%
+  );
 }
 
-.dark .dots-pattern {
-  background-image: radial-gradient(circle at 1px 1px, rgb(255 255 255 / 0.25) 1px, transparent 0);
-  background-size: 20px 20px;
-  @apply animate-dark-dots;
+.dark .hero-stars {
+  background-image: radial-gradient(circle at 1px 1px, rgb(255 255 255 / 0.3) 1px, transparent 0);
+  background-size: 30px 30px;
+  mask-image: linear-gradient(to bottom, transparent, black 25%, black 75%, transparent);
 }
 
-.dark .hero-section::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-image: 
-    linear-gradient(to right, rgb(255 255 255 / 0.15) 1px, transparent 1px),
-    linear-gradient(to bottom, rgb(255 255 255 / 0.15) 1px, transparent 1px);
-  background-size: 40px 40px;
-  @apply animate-dark-lines;
-  z-index: 0;
+.dark .hero-constellation {
+  background: linear-gradient(45deg, 
+    transparent 45%,
+    rgba(255, 255, 255, 0.1) 45%,
+    rgba(255, 255, 255, 0.1) 55%,
+    transparent 55%
+  );
+  background-size: 60px 60px;
 }

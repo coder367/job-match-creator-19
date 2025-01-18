@@ -4,30 +4,32 @@ import { Button } from "@/components/ui/button";
 export const HeroSection = () => {
   return (
     <section className="hero-section relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
-      {/* Animated dots background */}
-      <div className="absolute inset-0 dots-pattern opacity-20" />
+      {/* Animated background elements */}
+      <div className="absolute inset-0 hero-gradient" />
+      <div className="absolute inset-0 hero-stars opacity-70" />
+      <div className="absolute inset-0 hero-constellation opacity-30" />
       
-      {/* Animated circles */}
+      {/* Floating elements */}
       <div className="absolute inset-0 overflow-hidden">
-        {[...Array(3)].map((_, i) => (
+        {[...Array(5)].map((_, i) => (
           <motion.div
             key={i}
-            className="absolute rounded-full mix-blend-multiply filter blur-xl opacity-30"
+            className="absolute rounded-full bg-white/10 backdrop-blur-3xl"
             animate={{
-              x: [0, 100, 0],
-              y: [0, 50, 0],
+              y: [0, -20, 0],
+              opacity: [0.3, 0.5, 0.3],
             }}
             transition={{
-              duration: 10,
+              duration: 4,
               repeat: Infinity,
-              delay: i * 2,
+              delay: i * 0.7,
+              ease: "easeInOut",
             }}
             style={{
-              width: `${200 + i * 100}px`,
-              height: `${200 + i * 100}px`,
-              background: `hsl(${i * 60}, 70%, 50%)`,
-              left: `${i * 30}%`,
-              top: `${i * 20}%`,
+              width: `${20 + i * 10}px`,
+              height: `${20 + i * 10}px`,
+              left: `${15 + i * 20}%`,
+              top: `${20 + i * 15}%`,
             }}
           />
         ))}
@@ -54,7 +56,9 @@ export const HeroSection = () => {
             transition={{ delay: 0.5, duration: 0.8 }}
             className="flex flex-col sm:flex-row gap-4 justify-center"
           >
-            <Button className="px-8 py-3 rounded-lg bg-primary text-primary-foreground font-semibold hover:opacity-90 transition-opacity">
+            <Button 
+              className="px-8 py-3 rounded-lg bg-primary text-primary-foreground font-semibold hover:opacity-90 transition-opacity backdrop-blur-sm"
+            >
               Get Started Free
             </Button>
           </motion.div>
