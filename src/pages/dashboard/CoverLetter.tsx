@@ -85,128 +85,120 @@ export const CoverLetter = () => {
   };
 
   return (
-    <div className="container mx-auto py-6">
-      <h1 className="text-3xl font-bold mb-6">Cover Letter Generator</h1>
+    <div className="container mx-auto py-6 space-y-8">
+      <h1 className="text-3xl font-bold">Cover Letter Generator</h1>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Left Column - Input Form */}
-        <div className="space-y-6">
-          <Card className="p-6">
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="jobTitle"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Job Title</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g. Senior Software Engineer" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+      <Card className="p-6">
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <FormField
+              control={form.control}
+              name="jobTitle"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Job Title</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g. Senior Software Engineer" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-                <FormField
-                  control={form.control}
-                  name="companyName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Company Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g. Tech Corp" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+            <FormField
+              control={form.control}
+              name="companyName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Company Name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g. Tech Corp" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-                <FormField
-                  control={form.control}
-                  name="tone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Writing Tone</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a tone" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="professional">Professional</SelectItem>
-                          <SelectItem value="casual">Casual</SelectItem>
-                          <SelectItem value="enthusiastic">Enthusiastic</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+            <FormField
+              control={form.control}
+              name="tone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Writing Tone</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a tone" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="professional">Professional</SelectItem>
+                      <SelectItem value="casual">Casual</SelectItem>
+                      <SelectItem value="enthusiastic">Enthusiastic</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-                <FormField
-                  control={form.control}
-                  name="jobDescription"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Job Description</FormLabel>
-                      <FormControl>
-                        <Textarea 
-                          placeholder="Paste the job description here..." 
-                          className="h-32"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+            <FormField
+              control={form.control}
+              name="jobDescription"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Job Description</FormLabel>
+                  <FormControl>
+                    <Textarea 
+                      placeholder="Paste the job description here..." 
+                      className="h-32"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-                <Button 
-                  type="submit" 
-                  className="w-full"
-                  disabled={isGenerating}
-                >
-                  <Wand2 className="mr-2 h-4 w-4" />
-                  {isGenerating ? "Generating..." : "Generate Cover Letter"}
-                </Button>
-              </form>
-            </Form>
-          </Card>
+            <Button 
+              type="submit" 
+              className="w-full"
+              disabled={isGenerating}
+            >
+              <Wand2 className="mr-2 h-4 w-4" />
+              {isGenerating ? "Generating..." : "Generate Cover Letter"}
+            </Button>
+          </form>
+        </Form>
+      </Card>
+
+      <Card className="p-6">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-semibold">Your Cover Letter</h2>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => handleDownload("docx")}
+              disabled={!generatedLetter}
+            >
+              <FileDown className="mr-2 h-4 w-4" />
+              DOCX
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => handleDownload("pdf")}
+              disabled={!generatedLetter}
+            >
+              <Download className="mr-2 h-4 w-4" />
+              PDF
+            </Button>
+          </div>
         </div>
-
-        {/* Right Column - Generated Letter */}
-        <div className="space-y-4">
-          <Card className="p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">Your Cover Letter</h2>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => handleDownload("docx")}
-                  disabled={!generatedLetter}
-                >
-                  <FileDown className="mr-2 h-4 w-4" />
-                  DOCX
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => handleDownload("pdf")}
-                  disabled={!generatedLetter}
-                >
-                  <Download className="mr-2 h-4 w-4" />
-                  PDF
-                </Button>
-              </div>
-            </div>
-            
-            <div className="min-h-[500px] border rounded-md p-4">
-              <EditorContent editor={editor} />
-            </div>
-          </Card>
+        
+        <div className="min-h-[500px] border rounded-md p-4">
+          <EditorContent editor={editor} />
         </div>
-      </div>
+      </Card>
     </div>
   );
 };
