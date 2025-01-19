@@ -77,18 +77,27 @@ export const DashboardSidebar = () => {
 
   return (
     <div 
-      className="relative group"
-      onMouseEnter={() => setIsExpanded(true)}
+      className="relative"
       onMouseLeave={() => setIsExpanded(false)}
     >
       <Sidebar 
         variant="sidebar" 
         collapsible={isExpanded ? "none" : "icon"}
-        className={`transition-all duration-300 ${isExpanded ? 'w-64' : 'w-16'}`}
+        className={`transition-all duration-300 ease-in-out ${isExpanded ? 'w-64' : 'w-20'}`}
       >
-        <div className="p-4 flex items-center justify-center">
-          <LayoutDashboard className="h-8 w-8 text-primary cursor-pointer" />
+        {/* Header with logo and website name */}
+        <div 
+          className="p-4 flex flex-col items-center justify-center cursor-pointer"
+          onMouseEnter={() => setIsExpanded(true)}
+        >
+          <span className={`text-lg font-bold mb-2 transition-opacity duration-300 ${
+            isExpanded ? 'opacity-100' : 'opacity-0'
+          }`}>
+            Resume AI
+          </span>
+          <LayoutDashboard className="h-10 w-10 text-primary" />
         </div>
+
         <SidebarContent>
           <SidebarGroup>
             <SidebarGroupContent>
@@ -103,7 +112,7 @@ export const DashboardSidebar = () => {
                         isExpanded ? 'w-full px-4' : 'w-12 px-2'
                       }`}
                     >
-                      <item.icon className="w-4 h-4" />
+                      <item.icon className="w-5 h-5" />
                       <span className={`transition-opacity duration-300 ${
                         isExpanded ? 'opacity-100' : 'opacity-0'
                       }`}>
@@ -116,33 +125,34 @@ export const DashboardSidebar = () => {
             </SidebarGroupContent>
           </SidebarGroup>
         </SidebarContent>
-        <SidebarFooter className="p-2 space-y-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className="w-full flex items-center justify-center"
-          >
-            {theme === "dark" ? (
-              <Sun className="h-4 w-4" />
-            ) : (
-              <Moon className="h-4 w-4" />
-            )}
-          </Button>
-          <Button
-            variant="ghost"
-            onClick={handleLogout}
-            className={`w-full flex items-center gap-2 justify-center ${
-              isExpanded ? '' : 'px-0'
-            }`}
-          >
-            <LogOut className="h-4 w-4" />
-            <span className={`transition-opacity duration-300 ${
-              isExpanded ? 'opacity-100' : 'opacity-0 w-0'
-            }`}>
-              Logout
-            </span>
-          </Button>
+
+        <SidebarFooter className="p-2">
+          <div className="flex items-center justify-between gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="flex-1"
+            >
+              {theme === "dark" ? (
+                <Sun className="h-5 w-5" />
+              ) : (
+                <Moon className="h-5 w-5" />
+              )}
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={handleLogout}
+              className={`flex-1 flex items-center justify-center gap-2`}
+            >
+              <LogOut className="h-5 w-5" />
+              <span className={`transition-opacity duration-300 ${
+                isExpanded ? 'opacity-100' : 'opacity-0 w-0'
+              }`}>
+                Logout
+              </span>
+            </Button>
+          </div>
         </SidebarFooter>
       </Sidebar>
     </div>
