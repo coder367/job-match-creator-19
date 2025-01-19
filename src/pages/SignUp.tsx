@@ -1,0 +1,133 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { ArrowLeft } from "lucide-react";
+import { Footer } from "@/components/Footer";
+import { useTheme } from "next-themes";
+import { Moon, Sun } from "lucide-react";
+
+export default function SignUp() {
+  const navigate = useNavigate();
+  const { theme, setTheme } = useTheme();
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    password: "",
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Handle sign-up logic here
+    console.log("Sign up:", formData);
+  };
+
+  return (
+    <div className="min-h-screen bg-background flex flex-col">
+      <div className="flex items-center justify-between p-4 md:p-6">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => navigate(-1)}
+          className="rounded-full"
+        >
+          <ArrowLeft className="h-6 w-6" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+        >
+          {theme === "dark" ? (
+            <Sun className="h-5 w-5" />
+          ) : (
+            <Moon className="h-5 w-5" />
+          )}
+        </Button>
+      </div>
+
+      <div className="flex-1 container max-w-screen-xl mx-auto px-4 py-8 flex flex-col md:flex-row items-center justify-between gap-12">
+        <div className="w-full md:w-1/2 max-w-md">
+          <h1 className="text-4xl font-bold mb-8 bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600">
+            Create Account
+          </h1>
+          
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-2">
+              <label htmlFor="name" className="text-sm font-medium">
+                Full Name
+              </label>
+              <Input
+                id="name"
+                type="text"
+                placeholder="John Doe"
+                value={formData.name}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
+                required
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <label htmlFor="email" className="text-sm font-medium">
+                Email
+              </label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="john@example.com"
+                value={formData.email}
+                onChange={(e) =>
+                  setFormData({ ...formData, email: e.target.value })
+                }
+                required
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <label htmlFor="password" className="text-sm font-medium">
+                Password
+              </label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="••••••••"
+                value={formData.password}
+                onChange={(e) =>
+                  setFormData({ ...formData, password: e.target.value })
+                }
+                required
+              />
+            </div>
+            
+            <Button type="submit" className="w-full">
+              Sign Up
+            </Button>
+            
+            <p className="text-center text-sm text-muted-foreground">
+              Already have an account?{" "}
+              <Button
+                variant="link"
+                className="p-0 h-auto font-semibold"
+                onClick={() => navigate("/signin")}
+              >
+                Sign In
+              </Button>
+            </p>
+          </form>
+        </div>
+        
+        <div className="w-full md:w-1/2 flex justify-center">
+          <img
+            src="/lovable-uploads/1a679130-5a4a-4f6b-ab54-284ed077df26.png"
+            alt="Sign Up Illustration"
+            className="max-w-md w-full h-auto animate-float"
+          />
+        </div>
+      </div>
+      
+      <Footer />
+    </div>
+  );
+}
