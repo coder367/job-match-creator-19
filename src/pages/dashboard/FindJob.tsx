@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Briefcase,
   MapPin,
@@ -30,11 +32,13 @@ interface JobType {
 }
 
 export const FindJob = () => {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [location, setLocation] = useState("");
   const [experienceLevel, setExperienceLevel] = useState("");
-  const [salaryRange, setSalaryRange] = useState([50]);
+  const [salaryRange, setSalaryRange] = useState([0]);
   const [selectedIndustries, setSelectedIndustries] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
   // Mock industries data
@@ -72,18 +76,50 @@ export const FindJob = () => {
     },
   ];
 
-  const handleSearch = () => {
-    toast({
-      title: "Searching jobs...",
-      description: "Finding the best matches based on your criteria.",
-    });
+  const handleSearch = async () => {
+    setIsLoading(true);
+    try {
+      // In a real application, this would be a call to your Supabase database
+      // For now, we'll simulate a search with a delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      toast({
+        title: "Search Complete",
+        description: "Found matching jobs based on your criteria.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to search jobs. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleAutoApply = (jobId: number) => {
-    toast({
-      title: "Application Submitted",
-      description: "Your resume has been automatically submitted for this position.",
-    });
+  const handleAutoApply = async (jobId: number) => {
+    try {
+      // Here you would typically save the application to Supabase
+      toast({
+        title: "Application Submitted",
+        description: "Your resume has been automatically submitted for this position.",
+      });
+      
+      // Navigate to the applications page or show application status
+      navigate("/dashboard/resumes");
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to submit application. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleViewDetails = (jobId: number) => {
+    // Navigate to job details page
+    navigate(`/dashboard/jobs/${jobId}`);
   };
 
   return (
@@ -96,7 +132,16 @@ export const FindJob = () => {
               Discover opportunities matching your skills and experience
             </p>
           </div>
-          <Button variant="outline" className="gap-2">
+          <Button 
+            variant="outline" 
+            className="gap-2"
+            onClick={() => {
+              toast({
+                title: "AI Match",
+                description: "Finding the best matches based on your profile...",
+              });
+            }}
+          >
             <Sparkles className="h-4 w-4" />
             AI Match
           </Button>
@@ -148,13 +193,14 @@ export const FindJob = () => {
             <Slider
               value={salaryRange}
               onValueChange={setSalaryRange}
-              max={200}
-              step={10}
+              min={0}
+              max={50}
+              step={1}
               className="py-4"
             />
             <div className="flex justify-between text-sm text-muted-foreground">
               <span>$0k</span>
-              <span>${salaryRange}k+</span>
+              <span>${salaryRange}k</span>
             </div>
           </div>
 
@@ -187,8 +233,12 @@ export const FindJob = () => {
             </div>
           </div>
 
-          <Button onClick={handleSearch} className="w-full md:w-auto md:self-end">
-            Find Jobs
+          <Button 
+            onClick={handleSearch} 
+            className="w-full md:w-auto md:self-end"
+            disabled={isLoading}
+          >
+            {isLoading ? "Searching..." : "Find Jobs"}
           </Button>
         </div>
       </Card>
@@ -240,10 +290,13 @@ export const FindJob = () => {
               </div>
             </CardContent>
             <CardFooter className="flex justify-between">
-              <Button variant="outline" onClick={() => handleAutoApply(job.id)}>
+              <Button 
+                variant="outline" 
+                onClick={() => handleAutoApply(job.id)}
+              >
                 Quick Apply
               </Button>
-              <Button>
+              <Button onClick={() => handleViewDetails(job.id)}>
                 View Details
                 <ArrowUpRight className="ml-2 h-4 w-4" />
               </Button>
