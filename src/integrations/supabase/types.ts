@@ -9,7 +9,104 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      job_listings: {
+        Row: {
+          company_logo: string | null
+          company_name: string
+          created_at: string | null
+          id: string
+          job_description: string
+          job_title: string
+          location: string | null
+          requirements: string | null
+          skills: string[] | null
+          source: string
+          updated_at: string | null
+          url: string
+          user_id: string
+        }
+        Insert: {
+          company_logo?: string | null
+          company_name: string
+          created_at?: string | null
+          id?: string
+          job_description: string
+          job_title: string
+          location?: string | null
+          requirements?: string | null
+          skills?: string[] | null
+          source: string
+          updated_at?: string | null
+          url: string
+          user_id: string
+        }
+        Update: {
+          company_logo?: string | null
+          company_name?: string
+          created_at?: string | null
+          id?: string
+          job_description?: string
+          job_title?: string
+          location?: string | null
+          requirements?: string | null
+          skills?: string[] | null
+          source?: string
+          updated_at?: string | null
+          url?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      resume_optimizations: {
+        Row: {
+          cover_letter_text: string | null
+          created_at: string | null
+          id: string
+          job_listing_id: string
+          missing_skills: string[] | null
+          optimized_resume_id: string | null
+          original_resume_id: string
+          status: string
+          suggested_improvements: Json | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          cover_letter_text?: string | null
+          created_at?: string | null
+          id?: string
+          job_listing_id: string
+          missing_skills?: string[] | null
+          optimized_resume_id?: string | null
+          original_resume_id: string
+          status?: string
+          suggested_improvements?: Json | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          cover_letter_text?: string | null
+          created_at?: string | null
+          id?: string
+          job_listing_id?: string
+          missing_skills?: string[] | null
+          optimized_resume_id?: string | null
+          original_resume_id?: string
+          status?: string
+          suggested_improvements?: Json | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resume_optimizations_job_listing_id_fkey"
+            columns: ["job_listing_id"]
+            isOneToOne: false
+            referencedRelation: "job_listings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
