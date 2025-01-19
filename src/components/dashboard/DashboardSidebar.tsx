@@ -83,19 +83,19 @@ export const DashboardSidebar = () => {
       <Sidebar 
         variant="sidebar" 
         collapsible={isExpanded ? "none" : "icon"}
-        className={`transition-all duration-300 ease-in-out ${isExpanded ? 'w-64' : 'w-20'}`}
+        className={`transition-all duration-300 ease-in-out ${isExpanded ? 'w-64' : 'w-16'}`}
       >
         {/* Header with website name */}
         <div 
           className="p-4 flex flex-col items-center justify-center cursor-pointer"
           onMouseEnter={() => setIsExpanded(true)}
         >
+          <LayoutDashboard className="h-12 w-12 text-primary mb-2" />
           <span className={`text-lg font-bold transition-opacity duration-300 ${
             isExpanded ? 'opacity-100' : 'opacity-0'
           }`}>
             Resume AI
           </span>
-          <LayoutDashboard className="h-10 w-10 text-primary" />
         </div>
 
         <SidebarContent>
@@ -112,7 +112,7 @@ export const DashboardSidebar = () => {
                         isExpanded ? 'w-full px-4' : 'w-12 px-2'
                       }`}
                     >
-                      <item.icon className="w-5 h-5" />
+                      <item.icon className="w-6 h-6" />
                       <span className={`transition-opacity duration-300 ${
                         isExpanded ? 'opacity-100' : 'opacity-0'
                       }`}>
@@ -126,33 +126,31 @@ export const DashboardSidebar = () => {
           </SidebarGroup>
         </SidebarContent>
 
-        <SidebarFooter className="p-2">
-          <div className="flex items-center justify-between gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="flex-1"
-            >
-              {theme === "dark" ? (
-                <Sun className="h-5 w-5" />
-              ) : (
-                <Moon className="h-5 w-5" />
-              )}
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={handleLogout}
-              className={`flex-1 flex items-center justify-center gap-2`}
-            >
-              <LogOut className="h-5 w-5" />
-              <span className={`transition-opacity duration-300 ${
-                isExpanded ? 'opacity-100' : 'opacity-0 w-0'
-              }`}>
-                Logout
-              </span>
-            </Button>
-          </div>
+        <SidebarFooter className="p-2 flex flex-col gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            className="w-12 h-12"
+          >
+            {theme === "dark" ? (
+              <Sun className="h-6 w-6" />
+            ) : (
+              <Moon className="h-6 w-6" />
+            )}
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={handleLogout}
+            className="w-12 h-12 flex items-center justify-center"
+          >
+            <LogOut className="h-6 w-6" />
+            <span className={`transition-opacity duration-300 ml-2 ${
+              isExpanded ? 'opacity-100' : 'opacity-0 w-0'
+            }`}>
+              Logout
+            </span>
+          </Button>
         </SidebarFooter>
       </Sidebar>
     </div>
