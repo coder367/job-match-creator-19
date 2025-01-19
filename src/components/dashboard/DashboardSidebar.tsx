@@ -100,20 +100,20 @@ export const DashboardSidebar = () => {
           variant="ghost"
           size="icon"
           onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-          className="w-8 h-8 flex items-center justify-center"
+          className="w-10 h-10 flex items-center justify-center"
         >
           {theme === "dark" ? (
-            <Sun className="h-4 w-4" />
+            <Sun className="h-6 w-6" />
           ) : (
-            <Moon className="h-4 w-4" />
+            <Moon className="h-6 w-6" />
           )}
         </Button>
         <Button
           variant="ghost"
           onClick={handleLogout}
-          className="w-8 h-8 flex items-center justify-center"
+          className="w-10 h-10 flex items-center justify-center"
         >
-          <LogOut className="h-4 w-4" />
+          <LogOut className="h-6 w-6" />
         </Button>
       </SidebarFooter>
     </Sidebar>
