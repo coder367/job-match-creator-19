@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,6 +6,8 @@ import { ArrowLeft } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Moon, Sun } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { AuthError, AuthApiError } from "@supabase/supabase-js";
 
 export default function SignIn() {
   const navigate = useNavigate();
@@ -19,35 +21,65 @@ export default function SignIn() {
 
   const [isLoading, setIsLoading] = useState(false);
 
+  // Check if user is already logged in
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        navigate("/dashboard");
+      }
+    };
+    checkUser();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN") {
+        navigate("/dashboard");
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      // For testing purposes, we'll use a mock successful login
-      // In a real app, this would be replaced with actual authentication
-      if (formData.email && formData.password) {
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: formData.email,
+        password: formData.password,
+      });
+
+      if (error) throw error;
+
+      if (data.session) {
         toast({
           title: "Successfully signed in!",
           description: "Welcome back to ResumeAI",
         });
-        
         navigate("/dashboard");
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Please fill in all fields",
-        });
       }
     } catch (error) {
+      const authError = error as AuthError;
+      let errorMessage = "Failed to sign in. Please try again.";
+
+      if (authError instanceof AuthApiError) {
+        switch (authError.code) {
+          case "invalid_credentials":
+            errorMessage = "Invalid email or password. Please check your credentials.";
+            break;
+          case "user_not_found":
+            errorMessage = "No user found with these credentials.";
+            break;
+          default:
+            errorMessage = authError.message;
+        }
+      }
+
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to sign in. Please try again.",
+        description: errorMessage,
       });
     } finally {
       setIsLoading(false);
