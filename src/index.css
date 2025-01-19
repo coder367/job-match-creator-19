@@ -64,12 +64,12 @@
 }
 
 [data-collapsible="icon"] {
-  width: 3rem;
+  width: 2.5rem;
   transition: width 200ms ease;
 }
 
 [data-collapsible="icon"]:hover {
-  width: 16rem;
+  width: 14rem;
 }
 
 [data-collapsible="icon"] span {

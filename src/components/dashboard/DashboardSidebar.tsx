@@ -74,7 +74,7 @@ export const DashboardSidebar = () => {
 
   return (
     <Sidebar variant="sidebar" collapsible="icon">
-      <SidebarContent>
+      <SidebarContent className="py-2">
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -84,9 +84,10 @@ export const DashboardSidebar = () => {
                     onClick={() => navigate(item.path)}
                     isActive={location.pathname === item.path}
                     tooltip={item.title}
+                    className="h-8 px-2"
                   >
                     <item.icon className="w-4 h-4" />
-                    <span>{item.title}</span>
+                    <span className="ml-2">{item.title}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
@@ -99,20 +100,20 @@ export const DashboardSidebar = () => {
           variant="ghost"
           size="icon"
           onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-          className="w-8 h-8 flex items-center justify-center"
+          className="w-6 h-6 flex items-center justify-center"
         >
           {theme === "dark" ? (
-            <Sun className="h-4 w-4" />
+            <Sun className="h-3 w-3" />
           ) : (
-            <Moon className="h-4 w-4" />
+            <Moon className="h-3 w-3" />
           )}
         </Button>
         <Button
           variant="ghost"
           onClick={handleLogout}
-          className="w-8 h-8 flex items-center justify-center"
+          className="w-6 h-6 flex items-center justify-center"
         >
-          <LogOut className="h-4 w-4" />
+          <LogOut className="h-3 w-3" />
         </Button>
       </SidebarFooter>
     </Sidebar>
