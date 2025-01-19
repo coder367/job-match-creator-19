@@ -80,7 +80,7 @@ export const Templates = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-8">
         {templates.map((template) => (
           <Card key={template.id} className="flex flex-col h-full hover:shadow-lg transition-shadow duration-200">
             <CardHeader className="pb-4">
