@@ -5,19 +5,53 @@ import { Input } from "@/components/ui/input";
 import { ArrowLeft } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Moon, Sun } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 
 export default function SignIn() {
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
+  const { toast } = useToast();
+  
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle sign-in logic here
-    console.log("Sign in:", formData);
+    setIsLoading(true);
+
+    try {
+      // For testing purposes, we'll use a mock successful login
+      // In a real app, this would be replaced with actual authentication
+      if (formData.email && formData.password) {
+        // Simulate API call
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        toast({
+          title: "Successfully signed in!",
+          description: "Welcome back to ResumeAI",
+        });
+        
+        navigate("/dashboard");
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Please fill in all fields",
+        });
+      }
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to sign in. Please try again.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -83,8 +117,8 @@ export default function SignIn() {
               />
             </div>
             
-            <Button type="submit" className="w-full">
-              Sign In
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? "Signing in..." : "Sign In"}
             </Button>
             
             <p className="text-center text-sm text-muted-foreground">
