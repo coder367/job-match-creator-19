@@ -75,6 +75,7 @@
 [data-collapsible="icon"] span {
   opacity: 0;
   transition: opacity 100ms ease;
+  padding-left: 0.5rem;
 }
 
 [data-collapsible="icon"]:hover span {
