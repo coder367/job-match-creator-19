@@ -1,9 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
+import { useNavigate } from "react-router-dom";
 
 export const Navbar = () => {
   const { theme, setTheme } = useTheme();
+  const navigate = useNavigate();
 
   return (
     <nav className="fixed top-0 w-full z-50 border-b bg-background/80 backdrop-blur-sm">
@@ -25,7 +27,7 @@ export const Navbar = () => {
             )}
           </Button>
           
-          <Button>Sign Up</Button>
+          <Button onClick={() => navigate("/signup")}>Sign Up</Button>
         </div>
       </div>
     </nav>
