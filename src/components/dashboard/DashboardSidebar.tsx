@@ -85,12 +85,12 @@ export const DashboardSidebar = () => {
         collapsible={isExpanded ? "none" : "icon"}
         className={`transition-all duration-300 ease-in-out ${isExpanded ? 'w-64' : 'w-20'}`}
       >
-        {/* Header with logo and website name */}
+        {/* Header with website name */}
         <div 
           className="p-4 flex flex-col items-center justify-center cursor-pointer"
           onMouseEnter={() => setIsExpanded(true)}
         >
-          <span className={`text-lg font-bold mb-2 transition-opacity duration-300 ${
+          <span className={`text-lg font-bold transition-opacity duration-300 ${
             isExpanded ? 'opacity-100' : 'opacity-0'
           }`}>
             Resume AI
