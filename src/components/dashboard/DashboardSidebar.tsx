@@ -18,11 +18,8 @@ import {
   Palette,
   Crown,
   LogOut,
-  Sun,
-  Moon,
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 
 const menuItems = [
@@ -66,7 +63,6 @@ const menuItems = [
 export const DashboardSidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { theme, setTheme } = useTheme();
 
   const handleLogout = () => {
     // Add logout logic here
@@ -74,10 +70,9 @@ export const DashboardSidebar = () => {
   };
 
   return (
-    <Sidebar>
+    <Sidebar variant="sidebar" collapsible="icon">
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Menu</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => (
@@ -85,6 +80,7 @@ export const DashboardSidebar = () => {
                   <SidebarMenuButton
                     onClick={() => navigate(item.path)}
                     isActive={location.pathname === item.path}
+                    tooltip={item.title}
                   >
                     <item.icon className="w-4 h-4" />
                     <span>{item.title}</span>
@@ -95,19 +91,7 @@ export const DashboardSidebar = () => {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter className="p-4 space-y-2">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-          className="w-full flex items-center justify-center"
-        >
-          {theme === "dark" ? (
-            <Sun className="h-5 w-5" />
-          ) : (
-            <Moon className="h-5 w-5" />
-          )}
-        </Button>
+      <SidebarFooter className="p-4">
         <Button
           variant="ghost"
           onClick={handleLogout}

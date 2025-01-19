@@ -128,3 +128,26 @@
   0% { background-position: 0px 0px; }
   100% { background-position: 50px 50px; }
 }
+
+/* Sidebar hover effect */
+.group\/sidebar-wrapper {
+  transition: width 200ms ease;
+}
+
+[data-collapsible="icon"] {
+  width: 3rem;
+  transition: width 200ms ease;
+}
+
+[data-collapsible="icon"]:hover {
+  width: 16rem;
+}
+
+[data-collapsible="icon"] span {
+  opacity: 0;
+  transition: opacity 100ms ease;
+}
+
+[data-collapsible="icon"]:hover span {
+  opacity: 1;
+}
