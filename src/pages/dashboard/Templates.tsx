@@ -9,7 +9,6 @@ export const Templates = () => {
   const [category, setCategory] = useState("all");
   const { toast } = useToast();
 
-  // Mock templates data
   const templates = [
     {
       id: 1,
@@ -56,53 +55,62 @@ export const Templates = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4">
-        <h1 className="text-3xl font-bold">Resume Templates</h1>
-        <p className="text-muted-foreground">
-          Choose from our collection of professional templates designed to make your resume stand out.
-        </p>
+    <div className="container mx-auto px-4 py-8 max-w-7xl">
+      <div className="flex flex-col gap-6 mb-8">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold tracking-tight">Resume Templates</h1>
+          <p className="text-muted-foreground">
+            Choose from our collection of professional templates designed to make your resume stand out.
+          </p>
+        </div>
+
+        <div className="flex items-center justify-between flex-wrap gap-4">
+          <Select value={category} onValueChange={setCategory}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Filter by category" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Templates</SelectItem>
+              <SelectItem value="modern">Modern</SelectItem>
+              <SelectItem value="professional">Professional</SelectItem>
+              <SelectItem value="creative">Creative</SelectItem>
+              <SelectItem value="simple">Simple</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
-      <div className="flex justify-end">
-        <Select value={category} onValueChange={setCategory}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Filter by category" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Templates</SelectItem>
-            <SelectItem value="modern">Modern</SelectItem>
-            <SelectItem value="professional">Professional</SelectItem>
-            <SelectItem value="creative">Creative</SelectItem>
-            <SelectItem value="simple">Simple</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {templates.map((template) => (
-          <Card key={template.id} className="overflow-hidden">
-            <CardHeader>
-              <CardTitle>{template.name}</CardTitle>
+          <Card key={template.id} className="flex flex-col h-full hover:shadow-lg transition-shadow duration-200">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-xl">{template.name}</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="aspect-[3/4] relative bg-muted rounded-md overflow-hidden">
+            <CardContent className="flex-grow">
+              <div className="aspect-[3/4] relative rounded-md overflow-hidden bg-muted mb-4">
                 <img
                   src={template.preview}
                   alt={template.name}
-                  className="object-cover w-full h-full"
+                  className="object-cover w-full h-full transition-transform duration-200 hover:scale-105"
                 />
               </div>
-              <p className="mt-4 text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground">
                 {template.description}
               </p>
             </CardContent>
-            <CardFooter className="flex justify-between">
-              <Button variant="outline" onClick={() => handlePreview(template.id)}>
+            <CardFooter className="flex gap-3 pt-4">
+              <Button 
+                variant="outline" 
+                className="flex-1" 
+                onClick={() => handlePreview(template.id)}
+              >
                 <Eye className="mr-2 h-4 w-4" />
                 Preview
               </Button>
-              <Button onClick={() => handleApply(template.id)}>
+              <Button 
+                className="flex-1" 
+                onClick={() => handleApply(template.id)}
+              >
                 <Check className="mr-2 h-4 w-4" />
                 Apply
               </Button>
