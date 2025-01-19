@@ -35,13 +35,25 @@ export const JobInput = () => {
 
     setIsLoading(true);
     try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast({
+          title: "Error",
+          description: "You must be logged in to perform this action",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const { data: jobData, error } = await supabase.functions.invoke("scrape-job", {
         body: { url },
       });
 
       if (error) throw error;
 
-      // Save to database
+      // Save to database with user_id
       const { error: dbError } = await supabase
         .from("job_listings")
         .insert({
@@ -54,6 +66,7 @@ export const JobInput = () => {
           skills: jobData.skills,
           url: url,
           source: jobData.source,
+          user_id: user.id, // Add the user_id here
         });
 
       if (dbError) throw dbError;
