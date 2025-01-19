@@ -17,10 +17,13 @@ interface JobData {
   source: string;
 }
 
-export const JobInput = () => {
+interface JobInputProps {
+  onJobSelected: (job: JobData) => void;
+}
+
+export const JobInput = ({ onJobSelected }: JobInputProps) => {
   const [url, setUrl] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [jobData, setJobData] = useState<JobData | null>(null);
   const { toast } = useToast();
 
   const handleExtract = async () => {
@@ -66,12 +69,12 @@ export const JobInput = () => {
           skills: jobData.skills,
           url: url,
           source: jobData.source,
-          user_id: user.id, // Add the user_id here
+          user_id: user.id,
         });
 
       if (dbError) throw dbError;
 
-      setJobData(jobData);
+      onJobSelected(jobData);
       toast({
         title: "Success",
         description: "Job details extracted successfully",
@@ -89,72 +92,26 @@ export const JobInput = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <Card className="p-6">
-        <h2 className="text-2xl font-semibold mb-4">Optimize Resume for Job</h2>
-        <div className="space-y-4">
-          <div className="flex gap-4">
-            <Input
-              placeholder="Paste job URL from LinkedIn, Indeed, or Internshala"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              className="flex-1"
-            />
-            <Button onClick={handleExtract} disabled={isLoading}>
-              {isLoading ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Link className="mr-2 h-4 w-4" />
-              )}
-              Extract Details
-            </Button>
-          </div>
-
-          {jobData && (
-            <div className="space-y-4 mt-6">
-              <div className="flex items-center gap-4">
-                {jobData.companyLogo && (
-                  <img
-                    src={jobData.companyLogo}
-                    alt={jobData.companyName}
-                    className="w-12 h-12 object-contain"
-                  />
-                )}
-                <div>
-                  <h3 className="text-xl font-semibold">{jobData.jobTitle}</h3>
-                  <p className="text-muted-foreground">
-                    {jobData.companyName} • {jobData.location}
-                  </p>
-                </div>
-              </div>
-
-              <div>
-                <h4 className="font-semibold mb-2">Job Description</h4>
-                <p className="text-muted-foreground">{jobData.jobDescription}</p>
-              </div>
-
-              <div>
-                <h4 className="font-semibold mb-2">Requirements</h4>
-                <p className="text-muted-foreground">{jobData.requirements}</p>
-              </div>
-
-              <div>
-                <h4 className="font-semibold mb-2">Required Skills</h4>
-                <div className="flex flex-wrap gap-2">
-                  {jobData.skills.map((skill) => (
-                    <span
-                      key={skill}
-                      className="px-2 py-1 bg-secondary text-secondary-foreground rounded-md text-sm"
-                    >
-                      {skill}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
+    <Card className="p-6">
+      <h2 className="text-2xl font-semibold mb-4">Optimize Resume for Job</h2>
+      <div className="space-y-4">
+        <div className="flex gap-4">
+          <Input
+            placeholder="Paste job URL from LinkedIn, Indeed, or Internshala"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            className="flex-1"
+          />
+          <Button onClick={handleExtract} disabled={isLoading}>
+            {isLoading ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Link className="mr-2 h-4 w-4" />
+            )}
+            Extract Details
+          </Button>
         </div>
-      </Card>
-    </div>
+      </div>
+    </Card>
   );
 };
