@@ -95,26 +95,28 @@ export const DashboardSidebar = () => {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter className="p-2 space-y-2 mt-auto">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-          className="w-8 h-8 flex items-center justify-center"
-        >
-          {theme === "dark" ? (
-            <Sun className="h-4 w-4" />
-          ) : (
-            <Moon className="h-4 w-4" />
-          )}
-        </Button>
-        <Button
-          variant="ghost"
-          onClick={handleLogout}
-          className="w-8 h-8 flex items-center justify-center"
-        >
-          <LogOut className="h-4 w-4" />
-        </Button>
+      <SidebarFooter className="p-2">
+        <div className="flex items-center justify-between gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            className="w-8 h-8"
+          >
+            {theme === "dark" ? (
+              <Sun className="h-4 w-4" />
+            ) : (
+              <Moon className="h-4 w-4" />
+            )}
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={handleLogout}
+            className="w-8 h-8"
+          >
+            <LogOut className="h-4 w-4" />
+          </Button>
+        </div>
       </SidebarFooter>
     </Sidebar>
   );
