@@ -84,10 +84,10 @@ export const DashboardSidebar = () => {
                     onClick={() => navigate(item.path)}
                     isActive={location.pathname === item.path}
                     tooltip={item.title}
-                    className="h-9 px-2"
+                    className="h-9 px-2 flex items-center gap-2"
                   >
-                    <item.icon className="w-5 h-5" />
-                    <span className="ml-2">{item.title}</span>
+                    <item.icon className="w-5 h-5 min-w-5" />
+                    <span>{item.title}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
@@ -95,7 +95,7 @@ export const DashboardSidebar = () => {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter className="p-2 space-y-2 mt-auto">
+      <SidebarFooter className="p-2 flex gap-2 justify-center">
         <Button
           variant="ghost"
           size="icon"
