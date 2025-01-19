@@ -1,7 +1,10 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 export const HeroSection = () => {
+  const navigate = useNavigate();
+
   return (
     <section className="hero-section relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
       {/* Background patterns */}
@@ -59,6 +62,7 @@ export const HeroSection = () => {
             <Button 
               size="lg"
               className="px-8 py-6 rounded-lg bg-gradient-to-r from-pink-500 to-violet-500 dark:from-purple-600 dark:to-pink-600 text-white font-semibold hover:opacity-90 transition-opacity backdrop-blur-sm"
+              onClick={() => navigate("/signup")}
             >
               Get Started Free
             </Button>
