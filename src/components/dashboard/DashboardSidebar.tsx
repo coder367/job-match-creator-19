@@ -74,20 +74,20 @@ export const DashboardSidebar = () => {
 
   return (
     <Sidebar variant="sidebar" collapsible="icon">
-      <SidebarContent className="py-1">
+      <SidebarContent className="py-4">
         <SidebarGroup>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="space-y-2">
               {menuItems.map((item) => (
-                <SidebarMenuItem key={item.path}>
+                <SidebarMenuItem key={item.path} className="px-2">
                   <SidebarMenuButton
                     onClick={() => navigate(item.path)}
                     isActive={location.pathname === item.path}
                     tooltip={item.title}
-                    className="h-7 px-1.5"
+                    className="h-9 px-2"
                   >
-                    <item.icon className="w-4 h-4" />
-                    <span className="ml-1.5">{item.title}</span>
+                    <item.icon className="w-5 h-5" />
+                    <span className="ml-2">{item.title}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
@@ -95,25 +95,25 @@ export const DashboardSidebar = () => {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter className="p-1 space-y-1 mt-auto">
+      <SidebarFooter className="p-2 space-y-2 mt-auto">
         <Button
           variant="ghost"
           size="icon"
           onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-          className="w-6 h-6 flex items-center justify-center"
+          className="w-8 h-8 flex items-center justify-center"
         >
           {theme === "dark" ? (
-            <Sun className="h-3 w-3" />
+            <Sun className="h-4 w-4" />
           ) : (
-            <Moon className="h-3 w-3" />
+            <Moon className="h-4 w-4" />
           )}
         </Button>
         <Button
           variant="ghost"
           onClick={handleLogout}
-          className="w-6 h-6 flex items-center justify-center"
+          className="w-8 h-8 flex items-center justify-center"
         >
-          <LogOut className="h-3 w-3" />
+          <LogOut className="h-4 w-4" />
         </Button>
       </SidebarFooter>
     </Sidebar>
