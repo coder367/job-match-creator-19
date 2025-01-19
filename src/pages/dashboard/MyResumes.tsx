@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
+import { useNavigate } from "react-router-dom";
 import {
   Eye,
   FileEdit,
@@ -27,6 +28,7 @@ import {
   FileText,
 } from "lucide-react";
 import { format } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
 
 // Types for our resume data
 interface Resume {
@@ -38,8 +40,10 @@ interface Resume {
 
 export const MyResumes = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("date");
+  const [isLoading, setIsLoading] = useState(false);
 
   // Temporary mock data - replace with actual data fetching
   const mockResumes: Resume[] = [
@@ -65,38 +69,86 @@ export const MyResumes = () => {
 
   // Handle actions
   const handleEdit = (id: string) => {
+    navigate(`/dashboard/create?resumeId=${id}`);
     toast({
       title: "Editing resume",
-      description: "Redirecting to editor...",
-    });
-  };
-
-  const handleDelete = (id: string) => {
-    toast({
-      title: "Resume deleted",
-      description: "The resume has been successfully deleted.",
-    });
-  };
-
-  const handleDuplicate = (id: string) => {
-    toast({
-      title: "Resume duplicated",
-      description: "A copy of the resume has been created.",
-    });
-  };
-
-  const handleDownload = (id: string) => {
-    toast({
-      title: "Downloading resume",
-      description: "Your resume is being downloaded...",
+      description: "Opening resume editor...",
     });
   };
 
   const handlePreview = (id: string) => {
+    // Open in a new tab or modal
+    window.open(`/dashboard/resumes/preview/${id}`, '_blank');
     toast({
       title: "Preview mode",
-      description: "Opening resume preview...",
+      description: "Opening resume preview in a new tab...",
     });
+  };
+
+  const handleDownload = async (id: string) => {
+    setIsLoading(true);
+    try {
+      // Here you would typically fetch the resume data and generate PDF
+      // For now, we'll just show a toast
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate loading
+      
+      toast({
+        title: "Download started",
+        description: "Your resume is being downloaded...",
+      });
+    } catch (error) {
+      toast({
+        title: "Download failed",
+        description: "There was an error downloading your resume.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDuplicate = async (id: string) => {
+    setIsLoading(true);
+    try {
+      // Here you would typically duplicate the resume in the database
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate loading
+      
+      toast({
+        title: "Resume duplicated",
+        description: "A copy of your resume has been created.",
+      });
+    } catch (error) {
+      toast({
+        title: "Duplication failed",
+        description: "There was an error duplicating your resume.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this resume?")) return;
+    
+    setIsLoading(true);
+    try {
+      // Here you would typically delete the resume from the database
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate loading
+      
+      toast({
+        title: "Resume deleted",
+        description: "Your resume has been permanently deleted.",
+      });
+    } catch (error) {
+      toast({
+        title: "Deletion failed",
+        description: "There was an error deleting your resume.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Filter and sort resumes
@@ -124,7 +176,7 @@ export const MyResumes = () => {
           <FileText className="h-8 w-8" />
           My Resumes
         </h1>
-        <Button onClick={() => window.location.href = "/dashboard/create"}>
+        <Button onClick={() => navigate("/dashboard/create")}>
           Create New Resume
         </Button>
       </div>
@@ -186,6 +238,7 @@ export const MyResumes = () => {
                       size="icon"
                       onClick={() => handleEdit(resume.id)}
                       title="Edit"
+                      disabled={isLoading}
                     >
                       <FileEdit className="h-4 w-4" />
                     </Button>
@@ -194,6 +247,7 @@ export const MyResumes = () => {
                       size="icon"
                       onClick={() => handlePreview(resume.id)}
                       title="Preview"
+                      disabled={isLoading}
                     >
                       <Eye className="h-4 w-4" />
                     </Button>
@@ -202,6 +256,7 @@ export const MyResumes = () => {
                       size="icon"
                       onClick={() => handleDownload(resume.id)}
                       title="Download"
+                      disabled={isLoading}
                     >
                       <Download className="h-4 w-4" />
                     </Button>
@@ -210,6 +265,7 @@ export const MyResumes = () => {
                       size="icon"
                       onClick={() => handleDuplicate(resume.id)}
                       title="Duplicate"
+                      disabled={isLoading}
                     >
                       <Copy className="h-4 w-4" />
                     </Button>
@@ -218,6 +274,7 @@ export const MyResumes = () => {
                       size="icon"
                       onClick={() => handleDelete(resume.id)}
                       title="Delete"
+                      disabled={isLoading}
                       className="text-destructive hover:text-destructive"
                     >
                       <Trash2 className="h-4 w-4" />
