@@ -19,6 +19,11 @@ interface Template {
   user_id: string;
 }
 
+interface TemplateData {
+  description?: string;
+  [key: string]: any;
+}
+
 export const SelectTemplate = ({ formData, setFormData }) => {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
@@ -48,6 +53,16 @@ export const SelectTemplate = ({ formData, setFormData }) => {
 
     fetchTemplates();
   }, [toast]);
+
+  const getTemplateDescription = (templateData: Json | null): string => {
+    if (!templateData) return "No description available";
+    
+    if (typeof templateData === 'object' && templateData !== null) {
+      return (templateData as TemplateData).description || "No description available";
+    }
+    
+    return "No description available";
+  };
 
   return (
     <div className="space-y-4">
@@ -91,7 +106,7 @@ export const SelectTemplate = ({ formData, setFormData }) => {
                 </Card>
                 <h3 className="font-semibold">{template.name}</h3>
                 <p className="text-sm text-muted-foreground">
-                  {template.template_data?.description || "No description available"}
+                  {getTemplateDescription(template.template_data)}
                 </p>
               </Label>
             </div>
