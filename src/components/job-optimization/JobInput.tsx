@@ -18,6 +18,19 @@ interface JobDetails {
   url: string;
 }
 
+interface Job {
+  title: string;
+  company: {
+    name: string;
+    logoUrl: string;
+  };
+  location: string;
+  description: string;
+  requirements: string[];
+  skills: string[];
+  applicationUrl?: string;
+}
+
 interface JobInputProps {
   onJobSelected: (job: JobDetails) => void;
 }
@@ -28,11 +41,13 @@ export const JobInput = ({ onJobSelected }: JobInputProps) => {
   const [location, setLocation] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [searchResults, setSearchResults] = useState<Job[]>([]);
   const { toast } = useToast();
 
   const searchJobs = async () => {
     setIsLoading(true);
     setProgress(25);
+    setSearchResults([]);
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -56,23 +71,11 @@ export const JobInput = ({ onJobSelected }: JobInputProps) => {
       console.log('Received job search results:', data);
 
       if (data.jobs && data.jobs.length > 0) {
-        const firstJob = data.jobs[0];
-        const jobDetails: JobDetails = {
-          jobTitle: firstJob.title,
-          companyName: firstJob.company.name,
-          companyLogo: firstJob.company.logoUrl || "/placeholder.svg",
-          location: firstJob.locations?.[0]?.text || "Remote",
-          description: firstJob.description || "",
-          requirements: firstJob.requirements || [],
-          skills: firstJob.skills || [],
-          url: firstJob.applicationUrl || url
-        };
-
+        setSearchResults(data.jobs);
         setProgress(100);
-        onJobSelected(jobDetails);
         toast({
-          title: "Job Details Found",
-          description: "Successfully found job details",
+          title: `Found ${data.jobs.length} Jobs`,
+          description: "Click on a job to optimize your resume for it.",
         });
       } else {
         toast({
@@ -97,6 +100,7 @@ export const JobInput = ({ onJobSelected }: JobInputProps) => {
   const extractJobDetails = async () => {
     setIsLoading(true);
     setProgress(25);
+    setSearchResults([]);
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -149,6 +153,21 @@ export const JobInput = ({ onJobSelected }: JobInputProps) => {
     }
   };
 
+  const handleJobSelect = (job: Job) => {
+    const jobDetails: JobDetails = {
+      jobTitle: job.title,
+      companyName: job.company.name,
+      companyLogo: job.company.logoUrl || "/placeholder.svg",
+      location: job.location || "Remote",
+      description: job.description || "",
+      requirements: job.requirements || [],
+      skills: job.skills || [],
+      url: job.applicationUrl || ""
+    };
+    onJobSelected(jobDetails);
+    setSearchResults([]);
+  };
+
   return (
     <Card className="p-6 space-y-4">
       <h2 className="text-2xl font-semibold">Optimize Resume for a Job</h2>
@@ -179,6 +198,34 @@ export const JobInput = ({ onJobSelected }: JobInputProps) => {
             Search Jobs
           </Button>
         </div>
+
+        {searchResults.length > 0 && (
+          <div className="space-y-2">
+            <h3 className="font-medium">Search Results</h3>
+            <div className="space-y-2">
+              {searchResults.map((job, index) => (
+                <Card
+                  key={index}
+                  className="p-4 hover:bg-accent cursor-pointer"
+                  onClick={() => handleJobSelect(job)}
+                >
+                  <div className="flex items-center gap-4">
+                    <img
+                      src={job.company.logoUrl || "/placeholder.svg"}
+                      alt={job.company.name}
+                      className="w-12 h-12 object-contain"
+                    />
+                    <div>
+                      <h4 className="font-medium">{job.title}</h4>
+                      <p className="text-sm text-muted-foreground">{job.company.name}</p>
+                      <p className="text-sm text-muted-foreground">{job.location}</p>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="flex items-center">
           <div className="flex-grow border-t border-gray-300"></div>
