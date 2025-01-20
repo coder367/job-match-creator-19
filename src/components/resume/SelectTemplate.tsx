@@ -9,8 +9,13 @@ import { supabase } from "@/integrations/supabase/client";
 interface Template {
   id: string;
   name: string;
-  preview_url: string;
-  description: string;
+  preview_url: string | null;
+  template_data?: Json;
+  figma_file_id: string;
+  figma_node_id: string;
+  created_at?: string;
+  updated_at?: string;
+  user_id: string;
 }
 
 export const SelectTemplate = ({ formData, setFormData }) => {
@@ -85,7 +90,7 @@ export const SelectTemplate = ({ formData, setFormData }) => {
                 </Card>
                 <h3 className="font-semibold">{template.name}</h3>
                 <p className="text-sm text-muted-foreground">
-                  {template.description}
+                  {template.template_data?.description || "No description available"}
                 </p>
               </Label>
             </div>
