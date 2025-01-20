@@ -18,69 +18,68 @@ serve(async (req) => {
 
     const GOOGLE_JOBS_API_KEY = Deno.env.get('GOOGLE_JOBS_API_KEY')
     const GOOGLE_JOBS_CREDENTIALS = Deno.env.get('GOOGLE_JOBS_CREDENTIALS')
+    const SCRAPER_API_KEY = Deno.env.get('SCRAPER_API_KEY')
 
-    if (!GOOGLE_JOBS_API_KEY || !GOOGLE_JOBS_CREDENTIALS) {
-      console.error('Missing required API credentials')
-      throw new Error('Missing required API credentials')
-    }
-
-    const searchQuery = `${query}${location ? ` in ${location}` : ''}`
-    const url = `https://jobs.googleapis.com/v4/jobs:search?key=${GOOGLE_JOBS_API_KEY}`
-    
-    console.log('Making request to Google Jobs API')
-    
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${GOOGLE_JOBS_CREDENTIALS}`
-      },
-      body: JSON.stringify({
-        searchMode: "JOB_SEARCH",
-        jobQuery: {
-          query: searchQuery,
-          locationFilters: location ? [{
-            address: location
-          }] : undefined
-        }
-      })
-    })
-
-    const data = await response.json()
-    console.log('Received response from Google Jobs API:', data)
-
-    // Store the job in Supabase if it doesn't exist
-    if (data.jobs && data.jobs.length > 0) {
-      const supabase = createClient(
-        Deno.env.get('SUPABASE_URL') ?? '',
-        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-      )
-
-      const firstJob = data.jobs[0]
-      const { error: insertError } = await supabase
-        .from('job_listings')
-        .upsert({
-          user_id: req.headers.get('authorization')?.split(' ')[1], // Extract user ID from Bearer token
-          job_title: firstJob.title,
-          company_name: firstJob.company?.name || 'Unknown Company',
-          company_logo: firstJob.company?.logoUrl,
-          location: firstJob.locations?.[0]?.text || 'Remote',
-          job_description: firstJob.description,
-          requirements: firstJob.requirements?.join('\n'),
-          skills: firstJob.skills || [],
-          url: firstJob.applicationUrl,
-          source: 'google_jobs'
+    // Try Google Jobs API first
+    try {
+      if (GOOGLE_JOBS_API_KEY && GOOGLE_JOBS_CREDENTIALS) {
+        console.log('Attempting to use Google Jobs API')
+        const searchQuery = `${query}${location ? ` in ${location}` : ''}`
+        const url = `https://jobs.googleapis.com/v4/jobs:search?key=${GOOGLE_JOBS_API_KEY}`
+        
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${GOOGLE_JOBS_CREDENTIALS}`
+          },
+          body: JSON.stringify({
+            searchMode: "JOB_SEARCH",
+            jobQuery: {
+              query: searchQuery,
+              locationFilters: location ? [{
+                address: location
+              }] : undefined
+            }
+          })
         })
 
-      if (insertError) {
-        console.error('Error inserting job:', insertError)
+        if (response.ok) {
+          const data = await response.json()
+          console.log('Successfully retrieved jobs from Google Jobs API')
+          return new Response(
+            JSON.stringify(data),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          )
+        }
+        throw new Error('Google Jobs API request failed')
       }
+    } catch (error) {
+      console.error('Google Jobs API error:', error)
     }
 
-    return new Response(
-      JSON.stringify(data),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
+    // Fallback to ScraperAPI
+    if (SCRAPER_API_KEY) {
+      console.log('Falling back to ScraperAPI')
+      const scraperUrl = `http://api.scraperapi.com?api_key=${SCRAPER_API_KEY}&url=https://www.indeed.com/jobs?q=${encodeURIComponent(query)}&l=${encodeURIComponent(location || '')}`
+      
+      const response = await fetch(scraperUrl)
+      if (!response.ok) {
+        throw new Error('Failed to fetch jobs from ScraperAPI')
+      }
+
+      const html = await response.text()
+      // Basic parsing of Indeed's HTML response
+      const jobs = parseIndeedJobs(html)
+
+      return new Response(
+        JSON.stringify({ jobs }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    throw new Error('No job search APIs are configured')
+
   } catch (error) {
     console.error('Error in search-jobs function:', error)
     return new Response(
@@ -92,3 +91,36 @@ serve(async (req) => {
     )
   }
 })
+
+// Basic HTML parsing function for Indeed results
+function parseIndeedJobs(html: string) {
+  const jobs = []
+  // Basic regex pattern to extract job cards
+  const jobPattern = /<div class="job_seen_beacon">(.*?)<\/div>/gs
+  const matches = html.match(jobPattern)
+
+  if (matches) {
+    matches.forEach(match => {
+      const titleMatch = match.match(/<h2[^>]*>(.*?)<\/h2>/s)
+      const companyMatch = match.match(/class="companyName"[^>]*>(.*?)<\/a>/s)
+      const locationMatch = match.match(/class="companyLocation"[^>]*>(.*?)<\/div>/s)
+
+      if (titleMatch && companyMatch && locationMatch) {
+        jobs.push({
+          title: titleMatch[1].replace(/<[^>]*>/g, '').trim(),
+          company: {
+            name: companyMatch[1].replace(/<[^>]*>/g, '').trim(),
+          },
+          locations: [{
+            text: locationMatch[1].replace(/<[^>]*>/g, '').trim()
+          }],
+          description: '',
+          requirements: [],
+          skills: []
+        })
+      }
+    })
+  }
+
+  return jobs
+}
