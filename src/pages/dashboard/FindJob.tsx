@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,19 +16,22 @@ import {
   ArrowUpRight,
   Search,
   Sparkles,
+  Loader2,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
 
 interface JobType {
-  id: number;
+  id: string;
   title: string;
-  company: string;
-  location: string;
-  salary: string;
-  type: string;
-  match: string;
-  description: string;
-  requirements: string[];
+  company_name: string;
+  location: string | null;
+  job_description: string;
+  requirements: string | null;
+  skills: string[] | null;
+  url: string;
+  company_logo: string | null;
+  source: string;
 }
 
 export const FindJob = () => {
@@ -38,10 +41,35 @@ export const FindJob = () => {
   const [experienceLevel, setExperienceLevel] = useState("");
   const [salaryRange, setSalaryRange] = useState([0]);
   const [selectedIndustries, setSelectedIndustries] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  // Mock industries data
+  // Fetch jobs from Supabase
+  const { data: jobs, isLoading, error } = useQuery({
+    queryKey: ['jobs', searchQuery, location],
+    queryFn: async () => {
+      let query = supabase
+        .from('job_listings')
+        .select('*');
+
+      if (searchQuery) {
+        query = query.ilike('job_title', `%${searchQuery}%`);
+      }
+
+      if (location) {
+        query = query.ilike('location', `%${location}%`);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        throw error;
+      }
+
+      return data as JobType[];
+    },
+  });
+
+  // Industries data
   const industries = [
     { id: "tech", label: "Technology" },
     { id: "finance", label: "Finance" },
@@ -50,77 +78,60 @@ export const FindJob = () => {
     { id: "marketing", label: "Marketing" },
   ];
 
-  // Mock jobs data with expanded information
-  const jobs: JobType[] = [
-    {
-      id: 1,
-      title: "Senior Frontend Developer",
-      company: "Tech Corp",
-      location: "San Francisco, CA",
-      salary: "$120k - $150k",
-      type: "Remote",
-      match: "95%",
-      description: "Join our team to build modern web applications using React and TypeScript.",
-      requirements: ["5+ years React experience", "TypeScript proficiency", "CI/CD experience"],
-    },
-    {
-      id: 2,
-      title: "Full Stack Engineer",
-      company: "StartupX",
-      location: "New York, NY",
-      salary: "$100k - $130k",
-      type: "Hybrid",
-      match: "88%",
-      description: "Looking for a full-stack developer to help scale our platform.",
-      requirements: ["Node.js", "React", "PostgreSQL", "AWS"],
-    },
-  ];
-
   const handleSearch = async () => {
-    setIsLoading(true);
-    try {
-      // In a real application, this would be a call to your Supabase database
-      // For now, we'll simulate a search with a delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      toast({
-        title: "Search Complete",
-        description: "Found matching jobs based on your criteria.",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to search jobs. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
+    // The search is handled automatically by the useQuery hook
+    // when searchQuery or location changes
+    toast({
+      title: "Search Complete",
+      description: "Found matching jobs based on your criteria.",
+    });
   };
 
-  const handleAutoApply = async (jobId: number) => {
+  const handleAutoApply = async (jobId: string) => {
     try {
-      // Here you would typically save the application to Supabase
+      // Create a resume optimization entry
+      const { data: currentUser } = await supabase.auth.getUser();
+      
+      if (!currentUser?.user?.id) {
+        throw new Error("User not authenticated");
+      }
+
+      const { error: optimizationError } = await supabase
+        .from('resume_optimizations')
+        .insert({
+          user_id: currentUser.user.id,
+          job_listing_id: jobId,
+          status: 'pending',
+        });
+
+      if (optimizationError) throw optimizationError;
+
       toast({
-        title: "Application Submitted",
-        description: "Your resume has been automatically submitted for this position.",
+        title: "Application Started",
+        description: "Your resume optimization has been initiated.",
       });
       
-      // Navigate to the applications page or show application status
       navigate("/dashboard/resumes");
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to submit application. Please try again.",
+        description: "Failed to start application process. Please try again.",
         variant: "destructive",
       });
     }
   };
 
-  const handleViewDetails = (jobId: number) => {
-    // Navigate to job details page
+  const handleViewDetails = (jobId: string) => {
     navigate(`/dashboard/jobs/${jobId}`);
   };
+
+  if (error) {
+    toast({
+      title: "Error",
+      description: "Failed to fetch jobs. Please try again.",
+      variant: "destructive",
+    });
+  }
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -238,72 +249,88 @@ export const FindJob = () => {
             className="w-full md:w-auto md:self-end"
             disabled={isLoading}
           >
-            {isLoading ? "Searching..." : "Find Jobs"}
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Searching...
+              </>
+            ) : (
+              "Find Jobs"
+            )}
           </Button>
         </div>
       </Card>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        {jobs.map((job) => (
-          <Card key={job.id} className="relative">
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div>
-                  <CardTitle className="text-xl">{job.title}</CardTitle>
-                  <div className="flex items-center gap-2 mt-2 text-muted-foreground">
-                    <Building2 className="h-4 w-4" />
-                    <span>{job.company}</span>
+      {isLoading ? (
+        <div className="flex justify-center items-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      ) : jobs && jobs.length > 0 ? (
+        <div className="grid gap-6 md:grid-cols-2">
+          {jobs.map((job) => (
+            <Card key={job.id} className="relative">
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <div>
+                    <CardTitle className="text-xl">{job.title}</CardTitle>
+                    <div className="flex items-center gap-2 mt-2 text-muted-foreground">
+                      <Building2 className="h-4 w-4" />
+                      <span>{job.company_name}</span>
+                    </div>
                   </div>
+                  {job.company_logo && (
+                    <img 
+                      src={job.company_logo} 
+                      alt={`${job.company_name} logo`}
+                      className="h-12 w-12 object-contain"
+                    />
+                  )}
                 </div>
-                <Badge
-                  variant="secondary"
-                  className="absolute top-4 right-4 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100"
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-4">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <MapPin className="h-4 w-4" />
+                      <span>{job.location || 'Remote'}</span>
+                    </div>
+                    {job.skills && job.skills.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {job.skills.map((skill, index) => (
+                          <Badge key={index} variant="outline">
+                            {skill}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-sm text-muted-foreground line-clamp-3">
+                    {job.job_description}
+                  </p>
+                </div>
+              </CardContent>
+              <CardFooter className="flex justify-between">
+                <Button 
+                  variant="outline" 
+                  onClick={() => handleAutoApply(job.id)}
                 >
-                  {job.match} Match
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-4">
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <MapPin className="h-4 w-4" />
-                    <span>{job.location}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <DollarSign className="h-4 w-4" />
-                    <span>{job.salary}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Briefcase className="h-4 w-4" />
-                    <span>{job.type}</span>
-                  </div>
-                </div>
-                <p className="text-sm text-muted-foreground">{job.description}</p>
-                <div className="flex flex-wrap gap-2">
-                  {job.requirements.map((req, index) => (
-                    <Badge key={index} variant="outline">
-                      {req}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            </CardContent>
-            <CardFooter className="flex justify-between">
-              <Button 
-                variant="outline" 
-                onClick={() => handleAutoApply(job.id)}
-              >
-                Quick Apply
-              </Button>
-              <Button onClick={() => handleViewDetails(job.id)}>
-                View Details
-                <ArrowUpRight className="ml-2 h-4 w-4" />
-              </Button>
-            </CardFooter>
-          </Card>
-        ))}
-      </div>
+                  Quick Apply
+                </Button>
+                <Button onClick={() => handleViewDetails(job.id)}>
+                  View Details
+                  <ArrowUpRight className="ml-2 h-4 w-4" />
+                </Button>
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-12">
+          <p className="text-muted-foreground">
+            No jobs found matching your criteria. Try adjusting your search.
+          </p>
+        </div>
+      )}
     </div>
   );
 };
