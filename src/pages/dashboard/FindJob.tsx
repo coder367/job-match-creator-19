@@ -23,7 +23,7 @@ import { useQuery } from "@tanstack/react-query";
 
 interface JobType {
   id: string;
-  title: string;
+  job_title: string;
   company_name: string;
   location: string | null;
   job_description: string;
@@ -96,11 +96,24 @@ export const FindJob = () => {
         throw new Error("User not authenticated");
       }
 
+      // First, get the user's most recent resume
+      const { data: resumes, error: resumeError } = await supabase
+        .from('resume_templates')
+        .select('id')
+        .eq('user_id', currentUser.user.id)
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (resumeError || !resumes?.length) {
+        throw new Error("No resume found. Please create a resume first.");
+      }
+
       const { error: optimizationError } = await supabase
         .from('resume_optimizations')
         .insert({
           user_id: currentUser.user.id,
           job_listing_id: jobId,
+          original_resume_id: resumes[0].id,
           status: 'pending',
         });
 
@@ -115,7 +128,7 @@ export const FindJob = () => {
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to start application process. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to start application process. Please try again.",
         variant: "destructive",
       });
     }
@@ -272,7 +285,7 @@ export const FindJob = () => {
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div>
-                    <CardTitle className="text-xl">{job.title}</CardTitle>
+                    <CardTitle className="text-xl">{job.job_title}</CardTitle>
                     <div className="flex items-center gap-2 mt-2 text-muted-foreground">
                       <Building2 className="h-4 w-4" />
                       <span>{job.company_name}</span>
