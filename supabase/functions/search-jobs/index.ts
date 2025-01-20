@@ -18,6 +18,7 @@ serve(async (req) => {
     const GOOGLE_JOBS_CREDENTIALS = Deno.env.get('GOOGLE_JOBS_CREDENTIALS')
     const SCRAPER_API_KEY = Deno.env.get('SCRAPER_API_KEY')
 
+    // Validate required API keys
     if (!SCRAPER_API_KEY) {
       throw new Error('ScraperAPI key not configured')
     }
@@ -34,10 +35,12 @@ serve(async (req) => {
       
       if (!response.ok) {
         console.error('ScraperAPI response error:', response.status, response.statusText)
-        throw new Error(`ScraperAPI failed with status ${response.status}`)
+        throw new Error(`Failed to fetch job details: ${response.statusText}`)
       }
 
       const html = await response.text()
+      console.log('Successfully received HTML from ScraperAPI')
+      
       const job = parseJobFromHtml(html, url)
       console.log('Successfully extracted job details:', job)
 
@@ -74,19 +77,21 @@ serve(async (req) => {
             })
           })
 
-          if (response.ok) {
-            const data = await response.json()
-            jobs = data.jobs || []
-            console.log('Successfully retrieved jobs from Google Jobs API:', jobs.length)
-          } else {
+          if (!response.ok) {
             console.error('Google Jobs API error:', response.status, response.statusText)
+            throw new Error(`Google Jobs API error: ${response.statusText}`)
           }
+
+          const data = await response.json()
+          jobs = data.jobs || []
+          console.log('Successfully retrieved jobs from Google Jobs API:', jobs.length)
         } catch (error) {
           console.error('Google Jobs API error:', error)
+          // Continue to fallback method if Google Jobs API fails
         }
       }
 
-      // If no jobs found, try ScraperAPI with Indeed
+      // If no jobs found or Google Jobs API failed, try ScraperAPI with Indeed
       if (jobs.length === 0) {
         console.log('Falling back to ScraperAPI with Indeed...')
         const encodedQuery = encodeURIComponent(query)
@@ -98,10 +103,12 @@ serve(async (req) => {
         
         if (!response.ok) {
           console.error('ScraperAPI response error:', response.status, response.statusText)
-          throw new Error(`ScraperAPI failed with status ${response.status}`)
+          throw new Error(`Failed to fetch jobs: ${response.statusText}`)
         }
 
         const html = await response.text()
+        console.log('Successfully received HTML from ScraperAPI')
+        
         jobs = parseJobsFromIndeed(html)
         console.log('Successfully parsed jobs from Indeed:', jobs.length)
       }
@@ -118,7 +125,7 @@ serve(async (req) => {
     console.error('Error in search-jobs function:', error)
     return new Response(
       JSON.stringify({ 
-        error: error.message,
+        error: error.message || 'An unexpected error occurred',
         details: error.stack 
       }),
       { 
@@ -153,7 +160,7 @@ function parseJobsFromIndeed(html: string) {
             },
             location: locationMatch ? cleanHtml(locationMatch[1]) : "Remote",
             description: descriptionMatch ? cleanHtml(descriptionMatch[1]) : "",
-            requirements: [],
+            requirements: extractRequirements(card),
             skills: extractSkills(card)
           }
           jobs.push(job)
@@ -173,18 +180,21 @@ function parseJobsFromIndeed(html: string) {
 function parseJobFromHtml(html: string, url: string) {
   console.log('Parsing single job HTML...')
   try {
-    const titleMatch = html.match(/<h1[^>]*>(.*?)<\/h1>/s)
-    const companyMatch = html.match(/class="company"[^>]*>(.*?)<\/div>/s)
-    const descriptionMatch = html.match(/class="description"[^>]*>(.*?)<\/div>/s)
+    // Enhanced parsing logic with better error handling
+    const titleMatch = html.match(/<h1[^>]*>(.*?)<\/h1>/s) || html.match(/<title[^>]*>(.*?)<\/title>/s)
+    const companyMatch = html.match(/class="company"[^>]*>(.*?)<\/div>/s) || 
+                        html.match(/class="companyName"[^>]*>(.*?)<\/[^>]*>/s)
+    const descriptionMatch = html.match(/class="description"[^>]*>(.*?)<\/div>/s) ||
+                            html.match(/class="job-description"[^>]*>(.*?)<\/div>/s)
 
-    if (!titleMatch || !companyMatch) {
-      throw new Error('Could not parse essential job details')
+    if (!titleMatch) {
+      throw new Error('Could not parse job title')
     }
 
     const job = {
       title: cleanHtml(titleMatch[1]),
       company: {
-        name: cleanHtml(companyMatch[1]),
+        name: companyMatch ? cleanHtml(companyMatch[1]) : "Company Name Not Found",
         logoUrl: extractLogoUrl(html)
       },
       location: extractLocation(html),
@@ -207,23 +217,51 @@ function cleanHtml(str: string) {
 }
 
 function extractLogoUrl(html: string) {
-  const match = html.match(/class="company-logo".*?src="([^"]*)"/)
-  return match ? match[1] : "/placeholder.svg"
+  const logoMatches = [
+    html.match(/class="company-logo".*?src="([^"]*)"/) || [],
+    html.match(/class="logo".*?src="([^"]*)"/) || [],
+    html.match(/<img[^>]*alt="[^"]*logo[^"]*"[^>]*src="([^"]*)"/) || []
+  ]
+  
+  for (const match of logoMatches) {
+    if (match[1]) {
+      return match[1]
+    }
+  }
+  return "/placeholder.svg"
 }
 
 function extractLocation(html: string) {
-  const match = html.match(/class="location"[^>]*>(.*?)<\/div>/s)
-  return match ? cleanHtml(match[1]) : "Remote"
+  const locationMatches = [
+    html.match(/class="location"[^>]*>(.*?)<\/[^>]*>/s),
+    html.match(/class="companyLocation"[^>]*>(.*?)<\/[^>]*>/s),
+    html.match(/data-test="job-location"[^>]*>(.*?)<\/[^>]*>/s)
+  ]
+  
+  for (const match of locationMatches) {
+    if (match && match[1]) {
+      return cleanHtml(match[1])
+    }
+  }
+  return "Remote"
 }
 
 function extractRequirements(html: string) {
   const requirements = []
-  const reqSection = html.match(/Requirements:(.*?)<\/ul>/s)
-  if (reqSection) {
-    const items = reqSection[1].match(/<li>(.*?)<\/li>/g) || []
-    items.forEach(item => {
-      requirements.push(cleanHtml(item))
-    })
+  const reqSections = [
+    html.match(/Requirements:(.*?)<\/ul>/s),
+    html.match(/Qualifications:(.*?)<\/ul>/s),
+    html.match(/What you'll need:(.*?)<\/ul>/s)
+  ]
+  
+  for (const section of reqSections) {
+    if (section && section[1]) {
+      const items = section[1].match(/<li>(.*?)<\/li>/g) || []
+      items.forEach(item => {
+        requirements.push(cleanHtml(item))
+      })
+      if (requirements.length > 0) break
+    }
   }
   return requirements
 }
