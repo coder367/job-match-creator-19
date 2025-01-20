@@ -32,20 +32,39 @@ export const SelectTemplate = ({ formData, setFormData }) => {
     const fetchTemplates = async () => {
       try {
         console.log('Fetching resume templates');
-        const { data, error } = await supabase
+        
+        // First, try to fetch templates from Supabase
+        const { data: existingTemplates, error: fetchError } = await supabase
           .from("resume_templates")
           .select("*")
           .order('created_at', { ascending: false });
 
-        if (error) throw error;
+        if (fetchError) throw fetchError;
 
-        console.log('Received templates:', data);
-        setTemplates(data);
+        if (!existingTemplates || existingTemplates.length === 0) {
+          // If no templates exist, trigger the Figma sync
+          const { error: syncError } = await supabase.functions.invoke('figma-templates');
+          if (syncError) throw syncError;
+
+          // Fetch templates again after sync
+          const { data: newTemplates, error: refetchError } = await supabase
+            .from("resume_templates")
+            .select("*")
+            .order('created_at', { ascending: false });
+
+          if (refetchError) throw refetchError;
+          
+          console.log('Received templates after sync:', newTemplates);
+          setTemplates(newTemplates || []);
+        } else {
+          console.log('Received existing templates:', existingTemplates);
+          setTemplates(existingTemplates);
+        }
       } catch (error) {
         console.error("Error fetching templates:", error);
         toast({
           title: "Error",
-          description: "Failed to load resume templates",
+          description: "Failed to load resume templates. Please try again later.",
           variant: "destructive",
         });
       } finally {

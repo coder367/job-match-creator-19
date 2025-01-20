@@ -1,117 +1,93 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.0';
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.0'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+}
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders })
   }
 
   try {
-    const { fileId, nodeId } = await req.json();
-    const figmaToken = Deno.env.get("FIGMA_ACCESS_TOKEN");
-    const supabaseUrl = Deno.env.get('SUPABASE_URL');
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    const FIGMA_ACCESS_TOKEN = Deno.env.get('FIGMA_ACCESS_TOKEN')
+    const SUPABASE_URL = Deno.env.get('SUPABASE_URL')
+    const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')
 
-    if (!figmaToken || !supabaseUrl || !supabaseKey) {
-      throw new Error("Required environment variables are not configured");
+    if (!FIGMA_ACCESS_TOKEN || !SUPABASE_URL || !SUPABASE_ANON_KEY) {
+      throw new Error('Missing required environment variables')
     }
 
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 
-    // Fetch file data from Figma
-    console.log('Fetching Figma file data:', fileId, nodeId);
-    const fileResponse = await fetch(
-      `https://api.figma.com/v1/files/${fileId}/nodes?ids=${nodeId}`,
+    // Fetch templates from Figma
+    const fileId = 'YOUR_FIGMA_FILE_ID' // Replace with your actual Figma file ID
+    const response = await fetch(
+      `https://api.figma.com/v1/files/${fileId}`,
       {
         headers: {
-          "X-Figma-Token": figmaToken,
-        },
+          'X-Figma-Token': FIGMA_ACCESS_TOKEN
+        }
       }
-    );
+    )
 
-    if (!fileResponse.ok) {
-      throw new Error(`Figma API error: ${fileResponse.statusText}`);
+    if (!response.ok) {
+      throw new Error(`Figma API error: ${response.statusText}`)
     }
 
-    const fileData = await fileResponse.json();
-    console.log('Received Figma file data');
+    const data = await response.json()
+    console.log('Received Figma data:', data)
 
-    // Get image render
-    console.log('Fetching Figma image render');
-    const imageResponse = await fetch(
-      `https://api.figma.com/v1/images/${fileId}?ids=${nodeId}&format=png`,
-      {
-        headers: {
-          "X-Figma-Token": figmaToken,
-        },
-      }
-    );
-
-    if (!imageResponse.ok) {
-      throw new Error(`Figma image API error: ${imageResponse.statusText}`);
-    }
-
-    const imageData = await imageResponse.json();
-    console.log('Received Figma image data');
-
-    // Extract template metadata from Figma response
-    const node = fileData.nodes[nodeId].document;
-    const templateData = {
-      description: node.description || "No description available",
-      name: node.name,
-      styles: node.styles || {},
-      componentProperties: node.componentProperties || {},
-    };
-
-    // Store template in Supabase
-    const { data: template, error: templateError } = await supabase
-      .from('resume_templates')
-      .upsert({
+    // Process and store templates
+    const templates = data.document.children
+      .filter(node => node.type === 'FRAME' && node.name.toLowerCase().includes('template'))
+      .map(node => ({
         figma_file_id: fileId,
-        figma_node_id: nodeId,
-        name: templateData.name,
-        preview_url: imageData.images[nodeId],
-        template_data: templateData,
-        updated_at: new Date().toISOString(),
-      })
-      .select()
-      .single();
+        figma_node_id: node.id,
+        name: node.name,
+        preview_url: null, // You'll need to implement image rendering
+        template_data: {
+          description: node.description || 'A professional resume template',
+          styles: node.styles || {},
+        }
+      }))
 
-    if (templateError) {
-      throw new Error(`Failed to store template: ${templateError.message}`);
+    console.log('Processing templates:', templates.length)
+
+    // Store templates in Supabase
+    if (templates.length > 0) {
+      const { error: insertError } = await supabase
+        .from('resume_templates')
+        .upsert(templates)
+
+      if (insertError) {
+        throw insertError
+      }
     }
 
-    console.log('Successfully stored template in database');
+    return new Response(
+      JSON.stringify({ success: true, templates }),
+      { 
+        headers: { 
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        }
+      }
+    )
 
-    return new Response(
-      JSON.stringify({
-        template: template,
-        preview: imageData.images[nodeId],
-      }),
-      {
-        headers: {
-          ...corsHeaders,
-          "Content-Type": "application/json",
-        },
-      }
-    );
   } catch (error) {
-    console.error("Error:", error.message);
+    console.error('Error in figma-templates function:', error)
     return new Response(
-      JSON.stringify({ error: error.message }),
-      {
-        status: 500,
-        headers: {
-          ...corsHeaders,
-          "Content-Type": "application/json",
-        },
+      JSON.stringify({ 
+        error: error.message || 'An unexpected error occurred',
+        details: error.stack 
+      }),
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500
       }
-    );
+    )
   }
-});
+})
