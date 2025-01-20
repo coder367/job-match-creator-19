@@ -23,57 +23,70 @@ interface TemplateData {
   componentProperties?: Record<string, any>;
 }
 
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 1000; // 1 second
+
 export const SelectTemplate = ({ formData, setFormData }) => {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  useEffect(() => {
-    const fetchTemplates = async () => {
-      try {
-        console.log('Fetching resume templates');
+  const fetchTemplatesWithRetry = async (retryCount = 0) => {
+    try {
+      console.log(`Attempting to fetch templates (attempt ${retryCount + 1}/${MAX_RETRIES})`);
+      
+      const { data: existingTemplates, error: fetchError } = await supabase
+        .from("resume_templates")
+        .select("*")
+        .order('created_at', { ascending: false });
+
+      if (fetchError) {
+        console.error('Error fetching templates:', fetchError);
+        throw fetchError;
+      }
+
+      console.log('Received templates:', existingTemplates);
+      
+      if (!existingTemplates || existingTemplates.length === 0) {
+        console.log('No templates found, triggering Figma sync');
         
-        const { data: existingTemplates, error: fetchError } = await supabase
+        const { error: syncError } = await supabase.functions.invoke('figma-templates');
+        if (syncError) throw syncError;
+
+        // Fetch templates again after sync
+        const { data: newTemplates, error: refetchError } = await supabase
           .from("resume_templates")
           .select("*")
           .order('created_at', { ascending: false });
 
-        if (fetchError) throw fetchError;
-
-        console.log('Received templates:', existingTemplates);
+        if (refetchError) throw refetchError;
         
-        if (!existingTemplates || existingTemplates.length === 0) {
-          // If no templates exist, trigger the Figma sync
-          const { error: syncError } = await supabase.functions.invoke('figma-templates');
-          if (syncError) throw syncError;
-
-          // Fetch templates again after sync
-          const { data: newTemplates, error: refetchError } = await supabase
-            .from("resume_templates")
-            .select("*")
-            .order('created_at', { ascending: false });
-
-          if (refetchError) throw refetchError;
-          
-          console.log('Received templates after sync:', newTemplates);
-          setTemplates(newTemplates || []);
-        } else {
-          setTemplates(existingTemplates);
-        }
-      } catch (error) {
-        console.error("Error fetching templates:", error);
+        console.log('Received templates after sync:', newTemplates);
+        setTemplates(newTemplates || []);
+      } else {
+        setTemplates(existingTemplates);
+      }
+    } catch (error) {
+      console.error("Error in template fetch attempt:", error);
+      
+      if (retryCount < MAX_RETRIES - 1) {
+        console.log(`Retrying in ${RETRY_DELAY}ms...`);
+        setTimeout(() => fetchTemplatesWithRetry(retryCount + 1), RETRY_DELAY);
+      } else {
+        console.error("Max retries reached, showing error to user");
         toast({
-          title: "Error",
-          description: "Failed to load resume templates. Please try again later.",
+          title: "Error Loading Templates",
+          description: "Failed to load resume templates. Please refresh the page or try again later.",
           variant: "destructive",
         });
-      } finally {
         setLoading(false);
       }
-    };
+    }
+  };
 
-    fetchTemplates();
-  }, [toast]);
+  useEffect(() => {
+    fetchTemplatesWithRetry();
+  }, []);
 
   const getTemplateDescription = (templateData: Json | null): string => {
     if (!templateData) return "No description available";
