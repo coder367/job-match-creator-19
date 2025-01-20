@@ -11,17 +11,16 @@ interface Template {
   id: string;
   name: string;
   preview_url: string | null;
-  template_data?: Json;
+  template_data: Json;
   figma_file_id: string;
   figma_node_id: string;
-  created_at?: string;
-  updated_at?: string;
-  user_id: string;
 }
 
 interface TemplateData {
   description?: string;
-  [key: string]: any;
+  name?: string;
+  styles?: Record<string, any>;
+  componentProperties?: Record<string, any>;
 }
 
 export const SelectTemplate = ({ formData, setFormData }) => {
@@ -32,12 +31,15 @@ export const SelectTemplate = ({ formData, setFormData }) => {
   useEffect(() => {
     const fetchTemplates = async () => {
       try {
+        console.log('Fetching resume templates');
         const { data, error } = await supabase
           .from("resume_templates")
-          .select("*");
+          .select("*")
+          .order('created_at', { ascending: false });
 
         if (error) throw error;
 
+        console.log('Received templates:', data);
         setTemplates(data);
       } catch (error) {
         console.error("Error fetching templates:", error);
@@ -57,11 +59,8 @@ export const SelectTemplate = ({ formData, setFormData }) => {
   const getTemplateDescription = (templateData: Json | null): string => {
     if (!templateData) return "No description available";
     
-    if (typeof templateData === 'object' && templateData !== null) {
-      return (templateData as TemplateData).description || "No description available";
-    }
-    
-    return "No description available";
+    const data = templateData as TemplateData;
+    return data.description || "No description available";
   };
 
   return (
@@ -75,7 +74,6 @@ export const SelectTemplate = ({ formData, setFormData }) => {
         className="grid grid-cols-1 md:grid-cols-2 gap-4"
       >
         {loading ? (
-          // Loading skeletons
           Array.from({ length: 4 }).map((_, index) => (
             <div key={index} className="space-y-3">
               <Skeleton className="h-40 w-full" />
@@ -83,6 +81,10 @@ export const SelectTemplate = ({ formData, setFormData }) => {
               <Skeleton className="h-4 w-[200px]" />
             </div>
           ))
+        ) : templates.length === 0 ? (
+          <div className="col-span-2 text-center py-8 text-muted-foreground">
+            No templates available. Please check back later.
+          </div>
         ) : (
           templates.map((template) => (
             <div key={template.id}>
@@ -96,12 +98,16 @@ export const SelectTemplate = ({ formData, setFormData }) => {
                 className="flex flex-col items-center justify-center rounded-lg border-2 border-muted p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
               >
                 <Card className="w-full h-40 mb-4 bg-muted overflow-hidden">
-                  {template.preview_url && (
+                  {template.preview_url ? (
                     <img
                       src={template.preview_url}
                       alt={template.name}
                       className="w-full h-full object-cover"
                     />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                      No preview available
+                    </div>
                   )}
                 </Card>
                 <h3 className="font-semibold">{template.name}</h3>
