@@ -1,11 +1,70 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { useToast } from "@/components/ui/use-toast";
 import { Download, Printer } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Preview = ({ formData }) => {
-  const handleDownload = () => {
-    // TODO: Implement PDF download
-    console.log("Downloading resume...");
+  const { toast } = useToast();
+
+  const handleDownload = async () => {
+    try {
+      toast({
+        title: "Generating PDF",
+        description: "Please wait while we generate your resume...",
+      });
+
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error("User not authenticated");
+      }
+
+      // Call PDF.co API to generate PDF
+      const response = await fetch("https://api.pdf.co/v1/pdf/convert/from/html", {
+        method: "POST",
+        headers: {
+          "x-api-key": process.env.PDF_CO_API_KEY,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          html: document.querySelector(".resume-preview").innerHTML,
+          name: `resume_${Date.now()}.pdf`,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to generate PDF");
+      }
+
+      const { url } = await response.json();
+
+      // Store the generated PDF in Supabase
+      const { error: insertError } = await supabase
+        .from("generated_pdfs")
+        .insert({
+          user_id: user.id,
+          resume_id: formData.template,
+          file_url: url,
+        });
+
+      if (insertError) throw insertError;
+
+      // Download the PDF
+      window.open(url, "_blank");
+
+      toast({
+        title: "Success",
+        description: "Your resume has been downloaded!",
+      });
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      toast({
+        title: "Error",
+        description: "Failed to generate PDF. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handlePrint = () => {
@@ -28,7 +87,7 @@ export const Preview = ({ formData }) => {
         </div>
       </div>
 
-      <Card className="p-8 min-h-[800px] bg-white dark:bg-gray-900">
+      <Card className="p-8 min-h-[800px] bg-white dark:bg-gray-900 resume-preview">
         {/* Personal Information */}
         <div className="mb-8 text-center">
           <h1 className="text-3xl font-bold mb-2">

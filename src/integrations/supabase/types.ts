@@ -9,6 +9,30 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      generated_pdfs: {
+        Row: {
+          created_at: string | null
+          file_url: string
+          id: string
+          resume_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          file_url: string
+          id?: string
+          resume_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          file_url?: string
+          id?: string
+          resume_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       job_listings: {
         Row: {
           company_logo: string | null
@@ -106,6 +130,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      resume_templates: {
+        Row: {
+          created_at: string | null
+          figma_file_id: string
+          figma_node_id: string
+          id: string
+          name: string
+          preview_url: string | null
+          template_data: Json | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          figma_file_id: string
+          figma_node_id: string
+          id?: string
+          name: string
+          preview_url?: string | null
+          template_data?: Json | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          figma_file_id?: string
+          figma_node_id?: string
+          id?: string
+          name?: string
+          preview_url?: string | null
+          template_data?: Json | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
     }
     Views: {
