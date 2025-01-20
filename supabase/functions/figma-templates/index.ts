@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase_supabase-js@2.38.0'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.0'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -12,6 +12,8 @@ serve(async (req) => {
   }
 
   try {
+    console.log('Starting figma-templates function')
+    
     const FIGMA_ACCESS_TOKEN = Deno.env.get('FIGMA_ACCESS_TOKEN')
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL')
     const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')
@@ -22,33 +24,12 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 
-    // Using a default template file for now - you should replace this with your actual Figma file ID
-    const fileId = 'FP7lqd1V00LUaT5CmbkEL1' // Example Figma file ID with resume templates
-    console.log('Fetching Figma file:', fileId)
-
-    const response = await fetch(
-      `https://api.figma.com/v1/files/${fileId}`,
-      {
-        headers: {
-          'X-Figma-Token': FIGMA_ACCESS_TOKEN
-        }
-      }
-    )
-
-    if (!response.ok) {
-      console.error('Figma API response:', response.status, response.statusText)
-      throw new Error(`Figma API error: ${response.statusText}`)
-    }
-
-    const data = await response.json()
-    console.log('Received Figma data:', data)
-
-    // For now, let's create some default templates if Figma integration fails
+    // Create default templates since Figma integration is pending
     const defaultTemplates = [
       {
         name: "Modern Professional",
-        figma_file_id: fileId,
-        figma_node_id: "template1",
+        figma_file_id: "template1",
+        figma_node_id: "1",
         preview_url: "https://placehold.co/600x400?text=Modern+Professional",
         template_data: {
           description: "Clean and professional design perfect for corporate positions",
@@ -57,8 +38,8 @@ serve(async (req) => {
       },
       {
         name: "Creative Portfolio",
-        figma_file_id: fileId,
-        figma_node_id: "template2",
+        figma_file_id: "template2",
+        figma_node_id: "2",
         preview_url: "https://placehold.co/600x400?text=Creative+Portfolio",
         template_data: {
           description: "Stand out with a unique and artistic layout",
@@ -67,8 +48,8 @@ serve(async (req) => {
       },
       {
         name: "Minimal Classic",
-        figma_file_id: fileId,
-        figma_node_id: "template3",
+        figma_file_id: "template3",
+        figma_node_id: "3",
         preview_url: "https://placehold.co/600x400?text=Minimal+Classic",
         template_data: {
           description: "Simple and elegant design focusing on content",
@@ -79,10 +60,21 @@ serve(async (req) => {
 
     console.log('Inserting default templates:', defaultTemplates.length)
 
-    // Store templates in Supabase
+    // First clear existing templates
+    const { error: deleteError } = await supabase
+      .from('resume_templates')
+      .delete()
+      .not('id', 'is', null)
+
+    if (deleteError) {
+      console.error('Error clearing templates:', deleteError)
+      throw deleteError
+    }
+
+    // Insert new templates
     const { error: insertError } = await supabase
       .from('resume_templates')
-      .upsert(defaultTemplates.map(template => ({
+      .insert(defaultTemplates.map(template => ({
         ...template,
         user_id: null // Making templates available to all users
       })))
