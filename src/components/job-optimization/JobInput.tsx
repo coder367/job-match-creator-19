@@ -41,26 +41,19 @@ export const JobInput = ({ onJobSelected }: JobInputProps) => {
         throw new Error("You must be logged in to search for jobs");
       }
 
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/search-jobs`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ query, location })
-        }
-      );
-
-      setProgress(50);
+      console.log('Searching jobs with query:', query, 'location:', location);
       
-      if (!response.ok) {
-        throw new Error("Failed to fetch jobs");
+      const { data, error } = await supabase.functions.invoke('search-jobs', {
+        body: { query, location }
+      });
+
+      if (error) {
+        console.error('Error from search-jobs function:', error);
+        throw error;
       }
 
-      const data = await response.json();
       setProgress(75);
+      console.log('Received job search results:', data);
 
       if (data.jobs && data.jobs.length > 0) {
         const firstJob = data.jobs[0];
@@ -69,7 +62,7 @@ export const JobInput = ({ onJobSelected }: JobInputProps) => {
           companyName: firstJob.company.name,
           companyLogo: firstJob.company.logoUrl || "/placeholder.svg",
           location: firstJob.locations?.[0]?.text || "Remote",
-          description: firstJob.description,
+          description: firstJob.description || "",
           requirements: firstJob.requirements || [],
           skills: firstJob.skills || [],
           url: firstJob.applicationUrl || url
@@ -97,6 +90,7 @@ export const JobInput = ({ onJobSelected }: JobInputProps) => {
       });
     } finally {
       setIsLoading(false);
+      setProgress(0);
     }
   };
 
@@ -105,36 +99,53 @@ export const JobInput = ({ onJobSelected }: JobInputProps) => {
     setProgress(25);
 
     try {
-      // TODO: Implement actual job scraping logic
-      // This is a mock implementation
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        throw new Error("You must be logged in to extract job details");
+      }
+
+      const { data, error } = await supabase.functions.invoke('search-jobs', {
+        body: { url }
+      });
+
+      if (error) {
+        throw error;
+      }
+
       setProgress(75);
 
-      const mockJobDetails: JobDetails = {
-        jobTitle: "Software Engineer",
-        companyName: "Tech Corp",
-        companyLogo: "/placeholder.svg",
-        location: "Remote",
-        description: "We are looking for a talented software engineer...",
-        requirements: ["3+ years experience", "React expertise"],
-        skills: ["React", "TypeScript", "Node.js"],
-        url: url
-      };
+      if (data.job) {
+        const jobDetails: JobDetails = {
+          jobTitle: data.job.title,
+          companyName: data.job.company.name,
+          companyLogo: data.job.company.logoUrl || "/placeholder.svg",
+          location: data.job.location || "Remote",
+          description: data.job.description || "",
+          requirements: data.job.requirements || [],
+          skills: data.job.skills || [],
+          url: url
+        };
 
-      setProgress(100);
-      onJobSelected(mockJobDetails);
-      toast({
-        title: "Job Details Extracted",
-        description: "Successfully extracted job details from URL",
-      });
+        setProgress(100);
+        onJobSelected(jobDetails);
+        toast({
+          title: "Job Details Extracted",
+          description: "Successfully extracted job details from URL",
+        });
+      } else {
+        throw new Error("No job details found");
+      }
     } catch (error) {
+      console.error("Error extracting job details:", error);
       toast({
         title: "Error",
-        description: "Failed to extract job details. Please try again.",
+        description: error.message || "Failed to extract job details. Please try again.",
         variant: "destructive",
       });
     } finally {
       setIsLoading(false);
+      setProgress(0);
     }
   };
 
