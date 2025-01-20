@@ -18,11 +18,20 @@ serve(async (req) => {
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 
     if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+      console.error('Missing environment variables:', { 
+        hasUrl: !!SUPABASE_URL, 
+        hasServiceKey: !!SUPABASE_SERVICE_ROLE_KEY 
+      })
       throw new Error('Missing required environment variables')
     }
 
-    // Create Supabase client with service role key
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+    // Create Supabase client with service role key for admin access
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    })
 
     // Create default templates
     const defaultTemplates = [
@@ -58,9 +67,9 @@ serve(async (req) => {
       }
     ]
 
-    console.log('Inserting default templates:', defaultTemplates.length)
-
-    // First clear existing templates
+    console.log('Attempting to delete existing default templates')
+    
+    // First clear existing templates that have no user_id (system templates)
     const { error: deleteError } = await supabase
       .from('resume_templates')
       .delete()
@@ -71,12 +80,14 @@ serve(async (req) => {
       throw deleteError
     }
 
-    // Insert new templates
+    console.log('Successfully deleted existing templates, inserting new ones')
+
+    // Insert new templates with explicit null user_id
     const { error: insertError } = await supabase
       .from('resume_templates')
       .insert(defaultTemplates.map(template => ({
         ...template,
-        user_id: null // Making templates available to all users
+        user_id: null // Explicitly set as null for system templates
       })))
 
     if (insertError) {
@@ -84,8 +95,14 @@ serve(async (req) => {
       throw insertError
     }
 
+    console.log('Successfully inserted new templates')
+
     return new Response(
-      JSON.stringify({ success: true, templates: defaultTemplates }),
+      JSON.stringify({ 
+        success: true, 
+        message: 'Templates updated successfully',
+        templates: defaultTemplates 
+      }),
       { 
         headers: { 
           ...corsHeaders,
@@ -102,7 +119,10 @@ serve(async (req) => {
         details: error.stack 
       }),
       { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json'
+        },
         status: 500
       }
     )
