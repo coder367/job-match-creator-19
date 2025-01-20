@@ -33,7 +33,6 @@ export const SelectTemplate = ({ formData, setFormData }) => {
       try {
         console.log('Fetching resume templates');
         
-        // First, try to fetch templates from Supabase
         const { data: existingTemplates, error: fetchError } = await supabase
           .from("resume_templates")
           .select("*")
@@ -41,6 +40,8 @@ export const SelectTemplate = ({ formData, setFormData }) => {
 
         if (fetchError) throw fetchError;
 
+        console.log('Received templates:', existingTemplates);
+        
         if (!existingTemplates || existingTemplates.length === 0) {
           // If no templates exist, trigger the Figma sync
           const { error: syncError } = await supabase.functions.invoke('figma-templates');
@@ -57,7 +58,6 @@ export const SelectTemplate = ({ formData, setFormData }) => {
           console.log('Received templates after sync:', newTemplates);
           setTemplates(newTemplates || []);
         } else {
-          console.log('Received existing templates:', existingTemplates);
           setTemplates(existingTemplates);
         }
       } catch (error) {
@@ -79,7 +79,7 @@ export const SelectTemplate = ({ formData, setFormData }) => {
     if (!templateData) return "No description available";
     
     const data = templateData as TemplateData;
-    return data.description || "No description available";
+    return data.description || "Professional resume template";
   };
 
   return (
@@ -121,11 +121,11 @@ export const SelectTemplate = ({ formData, setFormData }) => {
                     <img
                       src={template.preview_url}
                       alt={template.name}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-contain"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                      No preview available
+                      Template Preview
                     </div>
                   )}
                 </Card>

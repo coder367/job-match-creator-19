@@ -58,23 +58,47 @@ export const JobInput = ({ onJobSelected }: JobInputProps) => {
 
       console.log('Searching jobs with query:', query, 'location:', location);
       
-      const { data, error } = await supabase.functions.invoke('search-jobs', {
-        body: { query, location }
-      });
+      // Direct database query instead of edge function
+      let dbQuery = supabase
+        .from('job_listings')
+        .select('*');
+
+      if (query) {
+        dbQuery = dbQuery.ilike('job_title', `%${query}%`);
+      }
+
+      if (location) {
+        dbQuery = dbQuery.ilike('location', `%${location}%`);
+      }
+
+      const { data: jobListings, error } = await dbQuery;
 
       if (error) {
-        console.error('Error from search-jobs function:', error);
+        console.error('Error fetching jobs:', error);
         throw error;
       }
 
       setProgress(75);
-      console.log('Received job search results:', data);
+      console.log('Received job listings:', jobListings);
 
-      if (data.jobs && data.jobs.length > 0) {
-        setSearchResults(data.jobs);
+      if (jobListings && jobListings.length > 0) {
+        const formattedJobs: Job[] = jobListings.map(job => ({
+          title: job.job_title,
+          company: {
+            name: job.company_name,
+            logoUrl: job.company_logo || "/placeholder.svg"
+          },
+          location: job.location || "Remote",
+          description: job.job_description,
+          requirements: job.requirements ? JSON.parse(job.requirements) : [],
+          skills: job.skills || [],
+          applicationUrl: job.url
+        }));
+
+        setSearchResults(formattedJobs);
         setProgress(100);
         toast({
-          title: `Found ${data.jobs.length} Jobs`,
+          title: `Found ${formattedJobs.length} Jobs`,
           description: "Click on a job to optimize your resume for it.",
         });
       } else {
