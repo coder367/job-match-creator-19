@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.0'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -14,17 +14,17 @@ serve(async (req) => {
   try {
     console.log('Starting figma-templates function')
     
-    const FIGMA_ACCESS_TOKEN = Deno.env.get('FIGMA_ACCESS_TOKEN')
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL')
-    const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 
-    if (!FIGMA_ACCESS_TOKEN || !SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
       throw new Error('Missing required environment variables')
     }
 
-    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+    // Create Supabase client with service role key
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
-    // Create default templates since Figma integration is pending
+    // Create default templates
     const defaultTemplates = [
       {
         name: "Modern Professional",
@@ -64,7 +64,7 @@ serve(async (req) => {
     const { error: deleteError } = await supabase
       .from('resume_templates')
       .delete()
-      .not('id', 'is', null)
+      .is('user_id', null)
 
     if (deleteError) {
       console.error('Error clearing templates:', deleteError)
