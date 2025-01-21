@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -24,31 +25,40 @@ interface GoogleJobsResponse {
 }
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
 
   try {
     const { query, location } = await req.json()
+    console.log('Received request with query:', query, 'location:', location)
     
+    // Parse the credentials from environment variable
     const credentials = JSON.parse(Deno.env.get('GOOGLE_JOBS_CREDENTIALS') || '{}')
-    const apiKey = Deno.env.get('GOOGLE_JOBS_API_KEY')
+    console.log('Using project ID:', credentials.project_id)
 
-    if (!credentials || !apiKey) {
-      throw new Error('Missing Google Jobs API credentials')
+    if (!credentials.project_id) {
+      throw new Error('Missing or invalid Google Jobs API credentials')
+    }
+
+    // Get access token
+    const accessToken = Deno.env.get('GOOGLE_JOBS_API_KEY')
+    if (!accessToken) {
+      throw new Error('Missing Google Jobs API key')
     }
 
     // Construct the request URL
     const baseUrl = 'https://jobs.googleapis.com/v4/projects'
     const projectId = credentials.project_id
     const endpoint = `${baseUrl}/${projectId}/jobs:search`
+    
+    console.log('Making request to endpoint:', endpoint)
 
     // Prepare the request body
     const searchBody = {
       searchMode: "JOB_SEARCH",
       requestMetadata: {
-        userId: "user123",
-        sessionId: "session123",
         domain: "www.google.com"
       },
       jobQuery: {
@@ -61,22 +71,26 @@ serve(async (req) => {
     const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${apiKey}`,
+        'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       },
       body: JSON.stringify(searchBody)
     })
 
+    console.log('Google Jobs API response status:', response.status)
+
     if (!response.ok) {
+      const errorText = await response.text()
+      console.error('Google Jobs API error response:', errorText)
       throw new Error(`Google Jobs API error: ${response.statusText}`)
     }
 
     const data: GoogleJobsResponse = await response.json()
+    console.log('Successfully received jobs data:', data.jobs?.length || 0, 'jobs found')
 
     // Transform the response to match our job_listings schema
-    const jobs = data.jobs.map(job => ({
-      id: crypto.randomUUID(),
+    const jobs = (data.jobs || []).map(job => ({
       job_title: job.title,
       company_name: job.company.name,
       company_logo: job.company.imageUri || null,
@@ -88,18 +102,27 @@ serve(async (req) => {
       source: 'google_jobs'
     }))
 
-    // Store the jobs in our database for future reference
+    // Create Supabase client
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    const { error: insertError } = await supabaseClient
-      .from('job_listings')
-      .upsert(jobs, { onConflict: 'url' })
+    // Store jobs in the database
+    if (jobs.length > 0) {
+      const { error: insertError } = await supabaseClient
+        .from('job_listings')
+        .upsert(
+          jobs.map(job => ({
+            ...job,
+            user_id: (req.headers.get('Authorization') || '').split('Bearer ')[1]
+          })),
+          { onConflict: 'job_title,company_name' }
+        )
 
-    if (insertError) {
-      console.error('Error storing jobs:', insertError)
+      if (insertError) {
+        console.error('Error storing jobs:', insertError)
+      }
     }
 
     return new Response(
