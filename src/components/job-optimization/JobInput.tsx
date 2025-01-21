@@ -58,31 +58,20 @@ export const JobInput = ({ onJobSelected }: JobInputProps) => {
 
       console.log('Searching jobs with query:', query, 'location:', location);
       
-      // Direct database query instead of edge function
-      let dbQuery = supabase
-        .from('job_listings')
-        .select('*');
-
-      if (query) {
-        dbQuery = dbQuery.ilike('job_title', `%${query}%`);
-      }
-
-      if (location) {
-        dbQuery = dbQuery.ilike('location', `%${location}%`);
-      }
-
-      const { data: jobListings, error } = await dbQuery;
+      // Call the Google Jobs API Edge Function
+      const { data, error } = await supabase.functions.invoke('google-jobs-search', {
+        body: { query, location }
+      });
 
       if (error) {
-        console.error('Error fetching jobs:', error);
         throw error;
       }
 
       setProgress(75);
-      console.log('Received job listings:', jobListings);
+      console.log('Received job listings:', data.jobs);
 
-      if (jobListings && jobListings.length > 0) {
-        const formattedJobs: Job[] = jobListings.map(job => ({
+      if (data.jobs && data.jobs.length > 0) {
+        const formattedJobs: Job[] = data.jobs.map(job => ({
           title: job.job_title,
           company: {
             name: job.company_name,
