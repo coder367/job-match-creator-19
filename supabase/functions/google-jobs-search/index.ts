@@ -34,50 +34,26 @@ serve(async (req) => {
     const { query, location } = await req.json()
     console.log('Received request with query:', query, 'location:', location)
     
-    // Parse the credentials from environment variable
-    const credentials = JSON.parse(Deno.env.get('GOOGLE_JOBS_CREDENTIALS') || '{}')
-    console.log('Using project ID:', credentials.project_id)
-
-    if (!credentials.project_id) {
-      throw new Error('Missing or invalid Google Jobs API credentials')
-    }
-
     // Get access token
     const accessToken = Deno.env.get('GOOGLE_JOBS_API_KEY')
     if (!accessToken) {
       throw new Error('Missing Google Jobs API key')
     }
 
-    // Construct the request URL
-    const baseUrl = 'https://jobs.googleapis.com/v4/projects'
-    const projectId = credentials.project_id
-    const endpoint = `${baseUrl}/${projectId}/jobs:search`
+    // Construct the request URL for Google Jobs Search API
+    const baseUrl = 'https://serpapi.com/search'
+    const searchParams = new URLSearchParams({
+      engine: 'google_jobs',
+      q: query,
+      location: location || '',
+      api_key: accessToken
+    })
     
+    const endpoint = `${baseUrl}?${searchParams.toString()}`
     console.log('Making request to endpoint:', endpoint)
 
-    // Prepare the request body
-    const searchBody = {
-      searchMode: "JOB_SEARCH",
-      requestMetadata: {
-        domain: "www.google.com"
-      },
-      jobQuery: {
-        query: query,
-        location: location || undefined
-      }
-    }
-
     // Make the request to Google Jobs API
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      body: JSON.stringify(searchBody)
-    })
-
+    const response = await fetch(endpoint)
     console.log('Google Jobs API response status:', response.status)
 
     if (!response.ok) {
@@ -86,19 +62,19 @@ serve(async (req) => {
       throw new Error(`Google Jobs API error: ${response.statusText}`)
     }
 
-    const data: GoogleJobsResponse = await response.json()
-    console.log('Successfully received jobs data:', data.jobs?.length || 0, 'jobs found')
+    const data = await response.json()
+    console.log('Successfully received jobs data')
 
     // Transform the response to match our job_listings schema
-    const jobs = (data.jobs || []).map(job => ({
+    const jobs = (data.jobs_results || []).map(job => ({
       job_title: job.title,
-      company_name: job.company.name,
-      company_logo: job.company.imageUri || null,
-      location: job.locations?.[0] || null,
-      job_description: job.description,
-      requirements: JSON.stringify(job.qualifications || []),
-      skills: job.skills || [],
-      url: job.applicationInfo?.uris?.[0] || '',
+      company_name: job.company_name,
+      company_logo: job.thumbnail || null,
+      location: job.location || null,
+      job_description: job.description || '',
+      requirements: JSON.stringify(job.highlights?.requirements || []),
+      skills: job.highlights?.skills || [],
+      url: job.job_link || '',
       source: 'google_jobs'
     }))
 
