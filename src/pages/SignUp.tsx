@@ -21,7 +21,6 @@ export default function SignUp() {
     password: "",
   });
 
-  // Check if user is already logged in
   useEffect(() => {
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -45,6 +44,8 @@ export default function SignUp() {
     setIsLoading(true);
 
     try {
+      console.log("Attempting signup with:", { email: formData.email });
+      
       const { data, error } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -52,10 +53,16 @@ export default function SignUp() {
           data: {
             full_name: formData.name,
           },
+          emailRedirectTo: window.location.origin + '/signin',
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Signup error:", error);
+        throw error;
+      }
+
+      console.log("Signup response:", data);
 
       if (data.user) {
         toast({
@@ -65,16 +72,20 @@ export default function SignUp() {
         navigate("/signin");
       }
     } catch (error) {
+      console.error("Caught error:", error);
       const authError = error as AuthError;
       let errorMessage = "Failed to create account. Please try again.";
 
       if (authError instanceof AuthApiError) {
-        switch (authError.code) {
-          case "user_already_registered":
-            errorMessage = "An account with this email already exists.";
+        switch (authError.status) {
+          case 400:
+            errorMessage = "Invalid email or password format.";
             break;
-          case "invalid_password":
-            errorMessage = "Password must be at least 6 characters long.";
+          case 401:
+            errorMessage = "Invalid credentials.";
+            break;
+          case 422:
+            errorMessage = "Email and password are required.";
             break;
           default:
             errorMessage = authError.message;
