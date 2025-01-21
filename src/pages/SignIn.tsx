@@ -21,10 +21,13 @@ export default function SignIn() {
 
   const [isLoading, setIsLoading] = useState(false);
 
-  // Check if user is already logged in
   useEffect(() => {
     const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error) {
+        console.error('Error checking session:', error.message);
+        return;
+      }
       if (session) {
         navigate("/dashboard");
       }
@@ -32,7 +35,7 @@ export default function SignIn() {
     checkUser();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_IN") {
+      if (event === "SIGNED_IN" && session) {
         navigate("/dashboard");
       }
     });
@@ -64,18 +67,22 @@ export default function SignIn() {
       let errorMessage = "Failed to sign in. Please try again.";
 
       if (authError instanceof AuthApiError) {
-        switch (authError.code) {
-          case "invalid_credentials":
+        switch (authError.status) {
+          case 400:
             errorMessage = "Invalid email or password. Please check your credentials.";
             break;
-          case "user_not_found":
-            errorMessage = "No user found with these credentials.";
+          case 401:
+            errorMessage = "Invalid credentials or your email hasn't been verified.";
+            break;
+          case 422:
+            errorMessage = "Email and password are required.";
             break;
           default:
             errorMessage = authError.message;
         }
       }
 
+      console.error('Sign in error:', authError);
       toast({
         variant: "destructive",
         title: "Error",
